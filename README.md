@@ -2,7 +2,7 @@
 ## __Sujet 5__ - Génération de terrain en 3D
   
 Thibault HECKEL  
-Julien NARCELLESI
+Julien MARCELLESI
 
 ### Compilation :
 ```
