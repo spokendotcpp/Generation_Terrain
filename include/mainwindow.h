@@ -1,15 +1,15 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <iostream> //debug mod
 #include <QMainWindow>
 
 class MainWindow : public QMainWindow
 {
 public:
-    QScreen* screen;
-
     MainWindow(QWidget *parent=nullptr);
     void center();
+    void keyPressEvent(QKeyEvent* event) override;
 };
 
 #endif // MAINWINDOW_H

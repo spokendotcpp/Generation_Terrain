@@ -13,6 +13,7 @@ class MeshViewerWidget: public QGLWidget
 public:
     MeshViewerWidget(QWidget *parent=nullptr);
     ~MeshViewerWidget();
+
     void initializeGL();
     void resizeGL(int width, int height);
     void paintGL();
