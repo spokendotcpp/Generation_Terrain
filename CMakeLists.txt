@@ -4,11 +4,8 @@ project(GenerationTerrain)
 
 set(exe_name "fields_generation")
 
-# Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-# Instruct CMake to run moc automaticlly when needed
 set(CMAKE_AUTOMOC ON)
-# Create code from a list of Qt designer ui files
 set(CMAKE_AUTOUIC ON)
 
 # Set up std=c++11
@@ -26,16 +23,25 @@ find_package(
 find_package(OpenGL REQUIRED)
 
 # CPP SOURCES FILES
-set(SOURCE_FILES
+set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
 )
 
-# EXE
-add_executable(${exe_name} ${SOURCE_FILES})
+# HEADERS FILES
+set(HEADERS
+    include/mainwindow.h
+    include/meshviewerwidget.h
+)
 
-include_directories(${OPENGL_INCLUDE_DIR})
+#EXE
+add_executable(
+    ${exe_name}
+    ${SOURCES}
+    ${HEADERS}
+)
+
 target_link_libraries(
     ${exe_name}
     Qt5::Widgets
