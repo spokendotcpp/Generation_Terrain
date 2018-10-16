@@ -3,6 +3,10 @@
 
 #include <iostream> //debug mod
 #include <QMainWindow>
+#include <QStyle>
+#include <QApplication>
+#include <QKeyEvent>
+#include <QScreen>
 
 class MainWindow : public QMainWindow
 {

@@ -4,14 +4,20 @@ project(GenerationTerrain)
 
 set(exe_name "fields_generation")
 
+# CMAKE QT OPTIONS
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
-# Set up std=c++11
+# CMAKE CPP FLAGS
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/build)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")# -Wextra -pedantic-errors")
 
+# OPENGL PREFERENCE LIBS
+set(OpenGL_GL_PREFERENCE "LEGACY")
+
+# PACKAGES REQUIRED
 find_package(
     Qt5 REQUIRED COMPONENTS
     Widgets
@@ -21,6 +27,7 @@ find_package(
 )
 
 find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
 
 # CPP SOURCES FILES
 set(SOURCES
@@ -35,18 +42,14 @@ set(HEADERS
     include/meshviewerwidget.h
 )
 
-#EXE
-add_executable(
-    ${exe_name}
-    ${SOURCES}
-    ${HEADERS}
-)
-
+# EXE + LINKING
+add_executable(${exe_name} ${SOURCES} ${HEADERS} collections.qrc)
 target_link_libraries(
     ${exe_name}
     Qt5::Widgets
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
-    ${OPENGL_gl_LIBRARY}
+    ${OPENGL_LIBRARIES}
+    ${GLEW_LIBRARIES}
 )
