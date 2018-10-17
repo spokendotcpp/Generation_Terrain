@@ -163,7 +163,7 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
     else {
         _view.translate(0.0f, 0.0f, -1.0f);
     }
-
+    
     update_ModelViewProjection();
     updateGL();
 }

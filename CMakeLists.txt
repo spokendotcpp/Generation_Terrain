@@ -12,7 +12,7 @@ set(CMAKE_AUTORCC ON)
 
 # CMAKE CPP FLAGS
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")# -Wextra -pedantic-errors")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic-errors")
 
 # OPENGL PREFERENCE LIBS
 set(OpenGL_GL_PREFERENCE "LEGACY")
@@ -27,7 +27,6 @@ find_package(
 )
 
 find_package(OpenGL REQUIRED)
-find_package(GLEW REQUIRED)
 
 # CPP SOURCES FILES
 set(SOURCES
@@ -51,5 +50,4 @@ target_link_libraries(
     Qt5::Gui
     Qt5::OpenGL
     ${OPENGL_LIBRARIES}
-    ${GLEW_LIBRARIES}
 )
