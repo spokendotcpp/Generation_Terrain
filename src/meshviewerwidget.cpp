@@ -132,8 +132,6 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
     if( _mouse_moving ){
         _mouse_x = event->x();
         _mouse_y = event->y();
-
-        //std::cerr << event->x() << " - " << event->y() << std::endl;
         std::cerr << _mouse_x << " - " << _mouse_y << std::endl;
     }
 }
@@ -163,7 +161,7 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
     else {
         _view.translate(0.0f, 0.0f, -1.0f);
     }
-
+    
     update_ModelViewProjection();
     updateGL();
 }
