@@ -1,13 +1,18 @@
 #include "../include/mainwindow.h"
-#include "../include/meshviewerwidget.h"
 
 MainWindow::MainWindow(QWidget *parent):
-    QMainWindow(parent)
+    QMainWindow(parent), mesh_viewer(new MeshViewerWidget())
 {
     this->setWindowTitle("Projet 5 : Génération de terrain");
-    this->setCentralWidget(new MeshViewerWidget());
+    this->setCentralWidget(mesh_viewer);
     this->setMinimumSize(600, 500);
     this->center();
+}
+
+MainWindow::~MainWindow()
+{
+    if( mesh_viewer != nullptr )
+        delete mesh_viewer;
 }
 
 void
@@ -28,4 +33,6 @@ MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if( event->key() == Qt::Key_Escape )
         close();
+    else
+        mesh_viewer->handle_key_events(event);
 }

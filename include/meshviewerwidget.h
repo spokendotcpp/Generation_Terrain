@@ -26,9 +26,9 @@ class MeshViewerWidget: public QGLWidget
 {
 /* Private members */
 private:
-    QOpenGLVertexArrayObject* _vao;
-    QOpenGLBuffer* _vbo;
-    QOpenGLShaderProgram* _program;
+    QOpenGLVertexArrayObject* _vao; // Vertex Array Object
+    QOpenGLBuffer* _vbo; // Vertex Buffer Object
+    QOpenGLShaderProgram* _program; // Shader program
     QOpenGLBuffer* _ebo; // Element Buffer Object
 
     /* Matrix which compose our Model View Projection Matrix */
@@ -40,17 +40,22 @@ private:
     QMatrix4x4 _MVP;
     GLint _loc_MVP; // ID which link variable between CPU & GPU
 
+    // Time elapsed between the two last frames.
     std::chrono::time_point<HRClock> lap;
 
     bool _mouse_moving;
     QPoint _mouse;
 
+    QVector3D _angle;
+    QVector3D _position;
+
+    float zNear;
+    float zFar;
+
 /* Public methods */
 public:
     MeshViewerWidget(QWidget *parent=nullptr);
     ~MeshViewerWidget() override;
-
-    void update_ModelViewProjection();
 
     /* Qt OpenGL override functions */
     void initializeGL() override;
@@ -66,9 +71,23 @@ public:
     /* Wheel */
     void wheelEvent(QWheelEvent*) override;
 
+    /* Since we don't want our QMainWindow to lose Focus,
+     * we handle key events with our own function.
+     * See mainwindow.cpp > keyPressEvent method.
+     */
+    void handle_key_events(QKeyEvent*);
+
 /* Private methods */
 private:
+    void default_model();
+    void default_view();
+    void default_projection();
+    void default_positions();
 
+    void update_model();
+    void update_view();
+    void update_projection();
+    void update_ModelViewProjection();
 };
 
 #endif // MESHVIEWERWIDGET_HPP
