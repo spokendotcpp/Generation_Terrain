@@ -1,6 +1,12 @@
 #ifndef MESHVIEWERWIDGET_HPP
 #define MESHVIEWERWIDGET_HPP
 
+#include <chrono>
+
+#include <QApplication>
+#include <QScreen>
+#include <QSize>
+
 #include <QMouseEvent>
 #include <QWheelEvent>
 
@@ -9,6 +15,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 #include <QMatrix4x4>
+
+typedef std::chrono::high_resolution_clock HRClock;
 
 /*
  * QGLWidget child class.
@@ -23,18 +31,19 @@ private:
     QOpenGLShaderProgram* _program;
     QOpenGLBuffer* _ebo; // Element Buffer Object
 
+    /* Matrix which compose our Model View Projection Matrix */
     QMatrix4x4 _model;
     QMatrix4x4 _view;
     QMatrix4x4 _projection;
 
+    /* The Model <-> View <-> Projection Matrix */
     QMatrix4x4 _MVP;
+    GLint _loc_MVP; // ID which link variable between CPU & GPU
 
-    QMatrix4x4 _matrix_world;
-    GLint _loc_matrix_world;
+    std::chrono::time_point<HRClock> lap;
 
     bool _mouse_moving;
-    int _mouse_x;
-    int _mouse_y;
+    QPoint _mouse;
 
 /* Public methods */
 public:
