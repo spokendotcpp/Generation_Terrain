@@ -58,8 +58,6 @@ MeshViewerWidget::initializeGL()
     _view.translate(QVector3D(0.0f, 0.0f, -20.0f));
     _projection.perspective(45.0f, 1920/1080, 0.1f, 100.0f);
 
-    update_ModelViewProjection();
-
     _program = new QOpenGLShaderProgram();
     _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert.glsl");
     _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag.glsl");
@@ -108,7 +106,7 @@ void
 MeshViewerWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    /* Painting happens here */
+    update_ModelViewProjection();
 
     _program->bind();
     _vao->bind();
