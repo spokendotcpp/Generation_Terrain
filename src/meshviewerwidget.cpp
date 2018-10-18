@@ -9,8 +9,9 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 
     // TODO
     _mouse_moving = false;
-    _mouse_x = 0;
-    _mouse_y = 0;
+    _mouse = QPoint(0, 0);
+
+    lap = HRClock::now();
 }
 
 MeshViewerWidget::~MeshViewerWidget()
@@ -50,13 +51,15 @@ MeshViewerWidget::initializeGL()
         0, 2, 1
     };
 
+    QSize ssize = QApplication::primaryScreen()->size();
+
     _model.setToIdentity();
     _view.setToIdentity();
     _projection.setToIdentity();
 
-    _model.rotate(15, QVector3D(0.0f, 0.0f, 1.0f));
+    // _model.rotate(15, QVector3D(0.0f, 0.0f, 1.0f));
     _view.translate(QVector3D(0.0f, 0.0f, -20.0f));
-    _projection.perspective(45.0f, 1920/1080, 0.1f, 100.0f);
+    _projection.perspective(45.0f, ssize.width()/ssize.height(), 0.1f, 100.0f);
 
     update_ModelViewProjection();
 
@@ -86,14 +89,16 @@ MeshViewerWidget::initializeGL()
     _program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
 
     // bind the location of our futur data into shader
-    _loc_matrix_world = _program->uniformLocation("transform");
+    _loc_MVP = _program->uniformLocation("MVP");
 
-    _vbo->release();
     _vao->release();
+    _vbo->release();
+    _ebo->release();
+
     _program->release();
 
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
@@ -107,6 +112,10 @@ MeshViewerWidget::resizeGL(int width, int height)
 void
 MeshViewerWidget::paintGL()
 {
+    auto current_time = HRClock::now();
+    std::cerr << "Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(current_time-lap).count() << " ms" << std::endl;
+    lap = current_time;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     /* Painting happens here */
 
@@ -114,25 +123,29 @@ MeshViewerWidget::paintGL()
     _vao->bind();
 
     // Send matrix_world value to Vertex Shader
-    _program->setUniformValue(_loc_matrix_world, _MVP);
+    _program->setUniformValue(_loc_MVP, _MVP);
 
     // With Element Buffer Object :
     glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
 
-    // With only Vertex Buffer Object :
-    //glDrawArrays(GL_TRIANGLES, 0, 3);
     _vao->release();
     _program->release();
-
 }
 
 void
 MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if( _mouse_moving ){
-        _mouse_x = event->x();
-        _mouse_y = event->y();
-        std::cerr << _mouse_x << " - " << _mouse_y << std::endl;
+        float xoffset = event->pos().x() - _mouse.x();
+        float yoffset = _mouse.y() - event->pos().y();
+
+        _mouse = event->pos();
+
+        float sensivity = 0.05f;
+        xoffset *= sensivity;
+        yoffset *= sensivity;
+
+
     }
 }
 
@@ -153,15 +166,11 @@ MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
 void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    /* Wheel go down */
-    if( event->delta() < 0 ){
-        _view.translate(0.0f, 0.0f, 1.0f);
-    }
-    /* Wheel go up */
-    else {
-        _view.translate(0.0f, 0.0f, -1.0f);
-    }
-    
+    float step = 1.0f;
+
+    if( event->delta() < 0 ) _view.translate(0.0f, 0.0f, step);  /* Wheel go down */
+    else                     _view.translate(0.0f, 0.0f, -step);  /* Wheel go up */
+
     update_ModelViewProjection();
     updateGL();
 }
