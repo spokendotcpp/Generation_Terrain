@@ -27,13 +27,12 @@ class MeshViewerWidget: public QGLWidget
 {
 /* Private members */
 private:
-    //std::vector<QOpenGLBuffer*> vbos;
-    //std::vector<QOpenGLBuffer*> ebos;
+    QOpenGLVertexArrayObject* vao_axis; // Vertex Array Object
+    QOpenGLBuffer* vbo_axis; // Vertex Buffer Object (Vertices)
+    QOpenGLBuffer* vbo_color_axis;
+    QOpenGLBuffer* ibo_axis; // Element Buffer Object (Indices)
 
-    //QOpenGLVertexArrayObject* vao; // Vertex Array Object
-    //QOpenGLBuffer* vbo; // Vertex Buffer Object
     QOpenGLShaderProgram* program; // Shader program
-    //QOpenGLBuffer* ebo; // Element Buffer Object
 
     /* Matrix which compose our Model View Projection Matrix */
     QMatrix4x4 model;
@@ -81,6 +80,11 @@ public:
      * See mainwindow.cpp > keyPressEvent method.
      */
     void handle_key_events(QKeyEvent*);
+
+    // TODO: MAYBE put this into the "Axis" class.
+    void axis_init();
+    void axis_render();
+    void axis_destroy();
 
 /* Private methods */
 private:

@@ -33,7 +33,7 @@ set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
-    src/buffer.cpp
+    #src/buffer.cpp
     src/axis.cpp
 )
 
@@ -41,12 +41,18 @@ set(SOURCES
 set(HEADERS
     include/mainwindow.h
     include/meshviewerwidget.h
-    include/buffer.h
+    #include/buffer.h
     include/axis.h
 )
 
 # EXE + LINKING
-add_executable(${exe_name} ${SOURCES} ${HEADERS} collections.qrc)
+add_executable(
+    ${exe_name}
+    ${SOURCES}
+    ${HEADERS}
+    collections.qrc
+)
+
 target_link_libraries(
     ${exe_name}
     Qt5::Widgets

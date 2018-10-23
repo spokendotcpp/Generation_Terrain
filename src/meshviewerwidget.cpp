@@ -18,15 +18,11 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 */
 MeshViewerWidget::~MeshViewerWidget()
 {
-    /*
-    vao->destroy();
-    vbo->destroy();
-    ebo->destroy();
-
-    delete vao;
-    delete ebo;
-    delete vbo;*/
-    delete program;
+    axis_destroy();
+    if( program != nullptr ){
+        delete program;
+        program = nullptr;
+    }
 }
 
 /* Update the model matrix
@@ -86,7 +82,7 @@ MeshViewerWidget::default_model()
 void
 MeshViewerWidget::default_view()
 {
-    angle = QVector3D(-45.0f, 0.0f, 0.0f);
+    angle = QVector3D(25.0f, 25.0f, 0.0f);
     position = QVector3D(0.0f, 0.0f, -2.0f);
     update_view();
 }
@@ -110,6 +106,86 @@ MeshViewerWidget::default_positions()
     default_projection();
 }
 
+void
+MeshViewerWidget::axis_init()
+{
+    Axis* axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
+
+    vao_axis = new QOpenGLVertexArrayObject();
+    vao_axis->create();
+    vao_axis->bind();
+
+    ibo_axis = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    ibo_axis->create();
+    ibo_axis->bind();
+    ibo_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    ibo_axis->allocate(axis->indices(), 6 * sizeof(unsigned int));
+
+    vbo_axis = new QOpenGLBuffer();
+    vbo_axis->create();
+    vbo_axis->bind();
+    vbo_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo_axis->allocate(axis->vertices(), 18 * sizeof(float));
+
+    program->enableAttributeArray(program->attributeLocation("position"));
+    program->setAttributeBuffer(program->attributeLocation("position"), GL_FLOAT, 0, 3);
+
+    float colors [18] = {
+        1.0f, 0.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f,
+        0.0f, 0.0f, 1.0f,
+    };
+
+    vbo_color_axis = new QOpenGLBuffer();
+    vbo_color_axis->create();
+    vbo_color_axis->bind();
+    vbo_color_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo_color_axis->allocate(colors, sizeof(float) * 18);
+
+    program->enableAttributeArray(program->attributeLocation("inColor"));
+    program->setAttributeBuffer(program->attributeLocation("inColor"), GL_FLOAT, 0, 3);
+
+    vao_axis->release();
+    ibo_axis->release();
+    vbo_axis->release();
+    vbo_color_axis->release();
+
+    delete axis;
+}
+
+void
+MeshViewerWidget::axis_render()
+{
+    vao_axis->bind();
+    glDrawElements(GL_LINES, 18, GL_UNSIGNED_INT, nullptr);
+    vao_axis->release();
+}
+
+void
+MeshViewerWidget::axis_destroy()
+{
+    if( vao_axis != nullptr ){
+        vao_axis->destroy();
+        delete vao_axis;
+        vao_axis = nullptr;
+    }
+
+    if( ibo_axis != nullptr ){
+        vbo_axis->destroy();
+        delete ibo_axis;
+        ibo_axis = nullptr;
+    }
+
+    if( vbo_axis != nullptr ){
+        vbo_axis->destroy();
+        delete vbo_axis;
+        vbo_axis = nullptr;
+    }
+}
+
 /* Setup our OpenGL context
  * Vertex Array Buffer,
  * Vertex Buffer Object,
@@ -126,64 +202,21 @@ MeshViewerWidget::initializeGL()
         return;
     }
 
-    /*
-    GLfloat vertices[] = {
-        0.5f, 0.5f, 0.0f,
-        0.5f, -0.5, 0.0f,
-        -0.5f, 0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-    };
-
-    GLuint indices[] = {
-        0, 2, 1,
-        2, 3, 1
-    };*/
-
-
-    // Création de notre AXIS
-    Axis axis(0.0f, 0.0f, 0.0f, 5.0f);
-
-    default_positions();
-
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert.glsl");
     program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag.glsl");
     program->link();
     program->bind();
 
-    /*vao = new QOpenGLVertexArrayObject();
-    vao->create();
-    vao->bind();*/
-
-    /*
-    vbo = new QOpenGLBuffer();
-    vbo->create();
-    vbo->bind();
-    vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo->allocate(vertices, sizeof(vertices));
-
-    ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    ebo->create();
-    ebo->bind();
-    ebo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    ebo->allocate(indices, sizeof(indices));
-    */
-
-    program->enableAttributeArray(0);
-    program->setAttributeBuffer(program->attributeLocation("position"), GL_FLOAT, 0, 3);
-
-    // bind the location of our futur data into shader
     loc_MVP = program->uniformLocation("MVP");
 
-    //vao->release();
-    /*vbo->release();
-    ebo->release();*/
-
+    axis_init();
     program->release();
 
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
+    default_positions();
 }
 
 /* When window (this widget) is resized */
@@ -206,18 +239,12 @@ MeshViewerWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /* update the MVP matrix */
-    update_ModelViewProjection();
+    update_ModelViewProjection();    
 
     program->bind();
-    // vao->bind();
+    program->setUniformValue(loc_MVP, MVP);// Send matrix_world value to Vertex Shader
 
-    // Send matrix_world value to Vertex Shader
-    program->setUniformValue(loc_MVP, MVP);
-
-    // With Element Buffer Object :
-    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-    // vao->release();
+    axis_render();
     program->release();
 }
 
