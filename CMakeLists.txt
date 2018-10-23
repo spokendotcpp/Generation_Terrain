@@ -33,12 +33,16 @@ set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
+    src/buffer.cpp
+    src/axis.cpp
 )
 
 # HEADERS FILES
 set(HEADERS
     include/mainwindow.h
     include/meshviewerwidget.h
+    include/buffer.h
+    include/axis.h
 )
 
 # EXE + LINKING

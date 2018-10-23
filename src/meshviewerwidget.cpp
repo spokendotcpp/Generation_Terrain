@@ -1,11 +1,12 @@
 #include <iostream>
 #include "../include/meshviewerwidget.h"
+#include "../include/axis.h"
 
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QGLWidget(parent)
 {
     setMouseTracking(true);
-    _mouse_moving = false;
+    mouse_pressed = false;
     lap = HRClock::now();
 }
 
@@ -17,14 +18,15 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 */
 MeshViewerWidget::~MeshViewerWidget()
 {
-    _vao->destroy();
-    _vbo->destroy();
-    _ebo->destroy();
+    /*
+    vao->destroy();
+    vbo->destroy();
+    ebo->destroy();
 
-    delete _vao;
-    delete _ebo;
-    delete _vbo;
-    delete _program;
+    delete vao;
+    delete ebo;
+    delete vbo;*/
+    delete program;
 }
 
 /* Update the model matrix
@@ -33,7 +35,7 @@ MeshViewerWidget::~MeshViewerWidget()
 void
 MeshViewerWidget::update_model()
 {
-    _model.setToIdentity();
+    model.setToIdentity();
 }
 
 /* Update the view matrix
@@ -42,10 +44,10 @@ MeshViewerWidget::update_model()
 void
 MeshViewerWidget::update_view()
 {
-    _view.setToIdentity();
-    _view.translate(_position);
-    _view.rotate(_angle.x(), 1.0f, 0.0f, 0.0f);
-    _view.rotate(_angle.y(), 0.0f, 1.0f, 0.0f);
+    view.setToIdentity();
+    view.translate(position);
+    view.rotate(angle.x(), 1.0f, 0.0f, 0.0f);
+    view.rotate(angle.y(), 0.0f, 1.0f, 0.0f);
 }
 
 /* Update the projection matrix
@@ -54,9 +56,9 @@ MeshViewerWidget::update_view()
 void
 MeshViewerWidget::update_projection()
 {
-    _projection.setToIdentity();
-    _projection.perspective(
-        45.0f,
+    projection.setToIdentity();
+    projection.perspective(
+        fov,
         static_cast<float>(size().width()/size().height()),
         zNear, zFar
     );
@@ -69,7 +71,7 @@ MeshViewerWidget::update_projection()
 void
 MeshViewerWidget::update_ModelViewProjection()
 {   
-    _MVP = _projection * _view * _model;
+    MVP = projection * view * model;
 }
 
 /* Load default values for the model matrix + update */
@@ -84,8 +86,8 @@ MeshViewerWidget::default_model()
 void
 MeshViewerWidget::default_view()
 {
-    _angle = QVector3D(-45.0f, 45.0f, 0.0f);
-    _position = QVector3D(0.0f, 0.0f, -2.0f);
+    angle = QVector3D(-45.0f, 0.0f, 0.0f);
+    position = QVector3D(0.0f, 0.0f, -2.0f);
     update_view();
 }
 
@@ -93,6 +95,7 @@ MeshViewerWidget::default_view()
 void
 MeshViewerWidget::default_projection()
 {
+    fov = 45.0f;
     zNear = 0.1f;
     zFar = 100.0f;
     update_projection();
@@ -123,6 +126,7 @@ MeshViewerWidget::initializeGL()
         return;
     }
 
+    /*
     GLfloat vertices[] = {
         0.5f, 0.5f, 0.0f,
         0.5f, -0.5, 0.0f,
@@ -133,47 +137,53 @@ MeshViewerWidget::initializeGL()
     GLuint indices[] = {
         0, 2, 1,
         2, 3, 1
-    };
+    };*/
+
+
+    // Création de notre AXIS
+    Axis axis(0.0f, 0.0f, 0.0f, 5.0f);
 
     default_positions();
 
-    _program = new QOpenGLShaderProgram();
-    _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert.glsl");
-    _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag.glsl");
-    _program->link();
-    _program->bind();
+    program = new QOpenGLShaderProgram();
+    program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/simple.vert.glsl");
+    program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/simple.frag.glsl");
+    program->link();
+    program->bind();
 
-    _vao = new QOpenGLVertexArrayObject();
-    _vao->create();
-    _vao->bind();
+    /*vao = new QOpenGLVertexArrayObject();
+    vao->create();
+    vao->bind();*/
 
-    _vbo = new QOpenGLBuffer();
-    _vbo->create();
-    _vbo->bind();
-    _vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _vbo->allocate(vertices, sizeof(vertices));
+    /*
+    vbo = new QOpenGLBuffer();
+    vbo->create();
+    vbo->bind();
+    vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    vbo->allocate(vertices, sizeof(vertices));
 
-    _ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    _ebo->create();
-    _ebo->bind();
-    _ebo->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    _ebo->allocate(indices, sizeof(indices));
+    ebo = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
+    ebo->create();
+    ebo->bind();
+    ebo->setUsagePattern(QOpenGLBuffer::StaticDraw);
+    ebo->allocate(indices, sizeof(indices));
+    */
 
-    _program->enableAttributeArray(0);
-    _program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
+    program->enableAttributeArray(0);
+    program->setAttributeBuffer(program->attributeLocation("position"), GL_FLOAT, 0, 3);
 
     // bind the location of our futur data into shader
-    _loc_MVP = _program->uniformLocation("MVP");
+    loc_MVP = program->uniformLocation("MVP");
 
-    _vao->release();
-    _vbo->release();
-    _ebo->release();
+    //vao->release();
+    /*vbo->release();
+    ebo->release();*/
 
-    _program->release();
+    program->release();
 
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
 }
 
 /* When window (this widget) is resized */
@@ -198,47 +208,47 @@ MeshViewerWidget::paintGL()
     /* update the MVP matrix */
     update_ModelViewProjection();
 
-    _program->bind();
-    _vao->bind();
+    program->bind();
+    // vao->bind();
 
     // Send matrix_world value to Vertex Shader
-    _program->setUniformValue(_loc_MVP, _MVP);
+    program->setUniformValue(loc_MVP, MVP);
 
     // With Element Buffer Object :
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-    _vao->release();
-    _program->release();
+    // vao->release();
+    program->release();
 }
 
 /* When mouse is moving inside the widget */
 void
 MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    if( _mouse_moving ){
-        QPoint pos = event->pos();
+    QPoint pos = event->pos();
 
-        _angle.setX(_angle.x() + pos.y() - _mouse.y());
-        _angle.setY(_angle.y() + pos.x() - _mouse.x());
-        _mouse = pos;
-
+    if( mouse_pressed ){
+        angle.setX(angle.x() + pos.y() - mouse.y());
+        angle.setY(angle.y() + pos.x() - mouse.x());
         update_view();
         updateGL();
     }
+
+    mouse = pos;
 }
 
 void
 MeshViewerWidget::mousePressEvent(QMouseEvent* event)
 {
     if( event->button() == Qt::MouseButton::LeftButton )
-       _mouse_moving = true;
+       mouse_pressed = true;
 }
 
 void
 MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     if( event->button() == Qt::MouseButton::LeftButton )
-        _mouse_moving = false;
+        mouse_pressed = false;
 }
 
 void
@@ -251,8 +261,8 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
      * Test if object goes outside of zNear & zFar positions.
      */
 
-    if( event->delta() < 0 ) _position.setZ(_position.z()+step);  /* Wheel go down */
-    else                     _position.setZ(_position.z()-step);  /* Wheel go up */
+    if( event->delta() < 0 ) position.setZ(position.z()-step);  /* Wheel go down */
+    else                     position.setZ(position.z()+step);  /* Wheel go up */
 
     update_view();
     updateGL();
@@ -265,16 +275,19 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
     int key = event->key();
 
     if( key == Qt::Key_Up )
-        _position.setZ(_position.z()-step);
+        position.setZ(position.z()+step);
     else
     if( key == Qt::Key_Down )
-        _position.setZ(_position.z()+step);
+        position.setZ(position.z()-step);
     else
     if( key == Qt::Key_Left )
-        _position.setX(_position.x()+step);
+        position.setX(position.x()+step);
     else
     if( key == Qt::Key_Right )
-        _position.setX(_position.x()-step);
+        position.setX(position.x()-step);
+    else
+    if( key == Qt::Key_V )
+        default_positions();
 
     update_view();
     updateGL();

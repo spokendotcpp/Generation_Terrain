@@ -11,8 +11,10 @@ MainWindow::MainWindow(QWidget *parent):
 
 MainWindow::~MainWindow()
 {
-    if( mesh_viewer != nullptr )
+    if( mesh_viewer != nullptr ){
         delete mesh_viewer;
+        mesh_viewer = nullptr;
+    }
 }
 
 void

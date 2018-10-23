@@ -1,6 +1,7 @@
 #ifndef MESHVIEWERWIDGET_HPP
 #define MESHVIEWERWIDGET_HPP
 
+#include <vector>
 #include <chrono>
 
 #include <QApplication>
@@ -26,29 +27,33 @@ class MeshViewerWidget: public QGLWidget
 {
 /* Private members */
 private:
-    QOpenGLVertexArrayObject* _vao; // Vertex Array Object
-    QOpenGLBuffer* _vbo; // Vertex Buffer Object
-    QOpenGLShaderProgram* _program; // Shader program
-    QOpenGLBuffer* _ebo; // Element Buffer Object
+    //std::vector<QOpenGLBuffer*> vbos;
+    //std::vector<QOpenGLBuffer*> ebos;
+
+    //QOpenGLVertexArrayObject* vao; // Vertex Array Object
+    //QOpenGLBuffer* vbo; // Vertex Buffer Object
+    QOpenGLShaderProgram* program; // Shader program
+    //QOpenGLBuffer* ebo; // Element Buffer Object
 
     /* Matrix which compose our Model View Projection Matrix */
-    QMatrix4x4 _model;
-    QMatrix4x4 _view;
-    QMatrix4x4 _projection;
+    QMatrix4x4 model;
+    QMatrix4x4 view;
+    QMatrix4x4 projection;
 
     /* The Model <-> View <-> Projection Matrix */
-    QMatrix4x4 _MVP;
-    GLint _loc_MVP; // ID which link variable between CPU & GPU
+    QMatrix4x4 MVP;
+    GLint loc_MVP; // ID which link variable between CPU & GPU
 
     // Time elapsed between the two last frames.
     std::chrono::time_point<HRClock> lap;
 
-    bool _mouse_moving;
-    QPoint _mouse;
+    bool mouse_pressed;
+    QPoint mouse;
 
-    QVector3D _angle;
-    QVector3D _position;
+    QVector3D angle;
+    QVector3D position;
 
+    float fov;
     float zNear;
     float zFar;
 
