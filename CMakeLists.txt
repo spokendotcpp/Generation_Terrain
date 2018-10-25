@@ -28,6 +28,9 @@ find_package(
 
 find_package(OpenGL REQUIRED)
 
+# TODO :
+# find_package(OpenMesh COMPONENTS Core Tools)
+
 # CPP SOURCES FILES
 set(SOURCES
     src/main.cpp
@@ -59,5 +62,7 @@ target_link_libraries(
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
+    OpenMeshCore
+    OpenMeshTools
     ${OPENGL_LIBRARIES}
 )

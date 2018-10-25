@@ -17,6 +17,14 @@
 #include <QOpenGLShaderProgram>
 #include <QMatrix4x4>
 
+#include <OpenMesh/Core/IO/MeshIO.hh>
+#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+
+struct MyTraits : public OpenMesh::DefaultTraits {
+    HalfedgeAttributes(OpenMesh::Attributes::PrevHalfedge);
+};
+
+typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
 typedef std::chrono::high_resolution_clock HRClock;
 
 /*
@@ -31,6 +39,8 @@ private:
     QOpenGLBuffer* vbo_axis; // Vertex Buffer Object (Vertices)
     QOpenGLBuffer* vbo_color_axis;
     QOpenGLBuffer* ibo_axis; // Element Buffer Object (Indices)
+
+    QOpenGLVertexArrayObject* vao_mesh;
 
     QOpenGLShaderProgram* program; // Shader program
 

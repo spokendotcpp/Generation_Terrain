@@ -1,6 +1,7 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file>shaders/simple.vert.glsl</file>
-    <file>shaders/simple.frag.glsl</file>
-</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>shaders/simple.vert.glsl</file>
+        <file>shaders/simple.frag.glsl</file>
+        <file>mesh_files/bunnyLowPoly.obj</file>
+    </qresource>
 </RCC>

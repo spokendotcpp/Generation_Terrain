@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <iostream> //debug mod
+
 #include <QMainWindow>
 #include <QStyle>
 #include <QApplication>
