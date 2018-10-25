@@ -2,7 +2,7 @@
 #include <iostream>
 
 Axis::Axis(float _x, float _y, float _z, float _length)
-    :DrawAbleObject(18, 6),
+    :DrawableObject(18, 6),
      x(_x), y(_y), z(_z),
      length(_length),
      raw_colors(nullptr),

@@ -2,14 +2,14 @@
 
 #include <iostream>
 
-DrawableObject::DrawAbleObject(size_t vts, size_t idx)
+DrawableObject::DrawableObject(size_t vts, size_t idx)
     :nb_vertices(vts), nb_indices(idx),
     buffers(nullptr), vertices(nullptr),
     colors(nullptr), indices(nullptr)
 {}
 
 
-DrawableObject::~DrawAbleObject()
+DrawableObject::~DrawableObject()
 {
     if( buffers != nullptr ){
         buffers->destroy();
