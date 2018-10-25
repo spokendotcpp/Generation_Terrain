@@ -2,14 +2,14 @@
 
 #include <iostream>
 
-DrawAbleObject::DrawAbleObject(size_t vts, size_t idx)
+DrawableObject::DrawAbleObject(size_t vts, size_t idx)
     :nb_vertices(vts), nb_indices(idx),
     buffers(nullptr), vertices(nullptr),
     colors(nullptr), indices(nullptr)
 {}
 
 
-DrawAbleObject::~DrawAbleObject()
+DrawableObject::~DrawAbleObject()
 {
     if( buffers != nullptr ){
         buffers->destroy();
@@ -36,12 +36,12 @@ DrawAbleObject::~DrawAbleObject()
     }
 }
 
-size_t DrawAbleObject::bytes_i() const
+size_t DrawableObject::bytes_i() const
 {
     return sizeof(GLuint) * nb_indices;
 }
 
-size_t DrawAbleObject::bytes_v() const
+size_t DrawableObject::bytes_v() const
 {
     return sizeof(GLfloat) * nb_vertices;
 }

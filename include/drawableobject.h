@@ -5,7 +5,7 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
-class DrawAbleObject {
+class DrawableObject {
 public:
     size_t nb_vertices;
     size_t nb_indices;
@@ -17,8 +17,8 @@ protected:
     QOpenGLBuffer* indices;
 
 public:
-    DrawAbleObject(size_t, size_t);
-    virtual ~DrawAbleObject();
+    DrawableObject(size_t, size_t);
+    virtual ~DrawableObject();
 
     size_t bytes_v() const;
     size_t bytes_i() const;

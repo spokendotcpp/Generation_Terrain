@@ -3,7 +3,7 @@
 
 #include "drawableobject.h"
 
-class Axis : public DrawAbleObject
+class Axis : public DrawableObject
 {
 private:
     float x, y, z;
