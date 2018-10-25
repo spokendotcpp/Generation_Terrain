@@ -8,6 +8,8 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     setMouseTracking(true);
     mouse_pressed = false;
     lap = HRClock::now();
+
+    axis = new Axis(0.0f, 0.0f, 0.0f, 2.0f);
 }
 
 /*
@@ -18,10 +20,14 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 */
 MeshViewerWidget::~MeshViewerWidget()
 {
-    axis_destroy();
     if( program != nullptr ){
         delete program;
         program = nullptr;
+    }
+
+    if( axis != nullptr ){
+        delete axis;
+        axis = nullptr;
     }
 }
 
@@ -106,86 +112,6 @@ MeshViewerWidget::default_positions()
     default_projection();
 }
 
-void
-MeshViewerWidget::axis_init()
-{
-    Axis* axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
-
-    vao_axis = new QOpenGLVertexArrayObject();
-    vao_axis->create();
-    vao_axis->bind();
-
-    ibo_axis = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    ibo_axis->create();
-    ibo_axis->bind();
-    ibo_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    ibo_axis->allocate(axis->indices(), 6 * sizeof(unsigned int));
-
-    vbo_axis = new QOpenGLBuffer();
-    vbo_axis->create();
-    vbo_axis->bind();
-    vbo_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo_axis->allocate(axis->vertices(), 18 * sizeof(float));
-
-    program->enableAttributeArray(program->attributeLocation("position"));
-    program->setAttributeBuffer(program->attributeLocation("position"), GL_FLOAT, 0, 3);
-
-    float colors [18] = {
-        1.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f,
-        0.0f, 0.0f, 1.0f,
-    };
-
-    vbo_color_axis = new QOpenGLBuffer();
-    vbo_color_axis->create();
-    vbo_color_axis->bind();
-    vbo_color_axis->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo_color_axis->allocate(colors, sizeof(float) * 18);
-
-    program->enableAttributeArray(program->attributeLocation("inColor"));
-    program->setAttributeBuffer(program->attributeLocation("inColor"), GL_FLOAT, 0, 3);
-
-    vao_axis->release();
-    ibo_axis->release();
-    vbo_axis->release();
-    vbo_color_axis->release();
-
-    delete axis;
-}
-
-void
-MeshViewerWidget::axis_render()
-{
-    vao_axis->bind();
-    glDrawElements(GL_LINES, 18, GL_UNSIGNED_INT, nullptr);
-    vao_axis->release();
-}
-
-void
-MeshViewerWidget::axis_destroy()
-{
-    if( vao_axis != nullptr ){
-        vao_axis->destroy();
-        delete vao_axis;
-        vao_axis = nullptr;
-    }
-
-    if( ibo_axis != nullptr ){
-        vbo_axis->destroy();
-        delete ibo_axis;
-        ibo_axis = nullptr;
-    }
-
-    if( vbo_axis != nullptr ){
-        vbo_axis->destroy();
-        delete vbo_axis;
-        vbo_axis = nullptr;
-    }
-}
-
 int nb_indices = 0;
 
 /* Setup our OpenGL context
@@ -212,7 +138,8 @@ MeshViewerWidget::initializeGL()
 
     loc_MVP = program->uniformLocation("MVP");
 
-    axis_init();
+    axis->init(program);
+
     program->release();
 
 
@@ -311,7 +238,7 @@ MeshViewerWidget::paintGL()
     program->bind();
     program->setUniformValue(loc_MVP, MVP);// Send matrix_world value to Vertex Shader
 
-    axis_render();
+    axis->show(GL_LINES);
 
     vao_mesh->bind();
     glDrawElements(GL_TRIANGLES, nb_indices, GL_UNSIGNED_INT, nullptr);

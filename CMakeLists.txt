@@ -28,15 +28,12 @@ find_package(
 
 find_package(OpenGL REQUIRED)
 
-# TODO :
-# find_package(OpenMesh COMPONENTS Core Tools)
-
 # CPP SOURCES FILES
 set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
-    #src/buffer.cpp
+    src/drawableobject.cpp
     src/axis.cpp
 )
 
@@ -44,7 +41,7 @@ set(SOURCES
 set(HEADERS
     include/mainwindow.h
     include/meshviewerwidget.h
-    #include/buffer.h
+    include/drawableobject.h
     include/axis.h
 )
 

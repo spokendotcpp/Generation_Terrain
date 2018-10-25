@@ -1,5 +1,5 @@
-#ifndef MESHVIEWERWIDGET_HPP
-#define MESHVIEWERWIDGET_HPP
+#ifndef MESHVIEWERWIDGET_H
+#define MESHVIEWERWIDGET_H
 
 #include <vector>
 #include <chrono>
@@ -19,6 +19,8 @@
 
 #include <OpenMesh/Core/IO/MeshIO.hh>
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+
+#include "../include/axis.h"
 
 struct MyTraits : public OpenMesh::DefaultTraits {
     HalfedgeAttributes(OpenMesh::Attributes::PrevHalfedge);
@@ -66,6 +68,8 @@ private:
     float zNear;
     float zFar;
 
+    Axis* axis;
+
 /* Public methods */
 public:
     MeshViewerWidget(QWidget *parent=nullptr);
@@ -91,11 +95,6 @@ public:
      */
     void handle_key_events(QKeyEvent*);
 
-    // TODO: MAYBE put this into the "Axis" class.
-    void axis_init();
-    void axis_render();
-    void axis_destroy();
-
 /* Private methods */
 private:
     void default_model();
@@ -109,4 +108,4 @@ private:
     void update_ModelViewProjection();
 };
 
-#endif // MESHVIEWERWIDGET_HPP
+#endif // MESHVIEWERWIDGET_H
