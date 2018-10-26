@@ -2,14 +2,14 @@
 #include <iostream>
 
 Axis::Axis(float _x, float _y, float _z, float _length)
-    :DrawableObject(18, 6),
+    :DrawableObject(),
      x(_x), y(_y), z(_z),
-     length(_length),
-     raw_colors(nullptr),
-     raw_vertices(nullptr),
-     raw_indices(nullptr)
+     length(_length)
 {
     float half = length/2.0f;
+
+    nb_vertices = 18;
+    nb_indices = 6;
 
     raw_vertices = new GLfloat[nb_vertices] {
         x-half, y, z,
@@ -34,24 +34,6 @@ Axis::Axis(float _x, float _y, float _z, float _length)
         2, 3,
         4, 5,
     };
-}
-
-Axis::~Axis()
-{
-    if( raw_colors != nullptr ){
-        delete [] raw_colors;
-        raw_colors = nullptr;
-    }
-
-    if( raw_vertices != nullptr ){
-        delete [] raw_vertices;
-        raw_vertices = nullptr;
-    }
-
-    if( raw_indices != nullptr ){
-        delete [] raw_indices;
-        raw_indices = nullptr;
-    }
 }
 
 void Axis::init(QOpenGLShaderProgram* program)

@@ -5,6 +5,8 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
+// TODO : ERASE FROM MEMORY RAW ARRAY BEFORE DRAWING
+
 class DrawableObject {
 public:
     size_t nb_vertices;
@@ -16,8 +18,12 @@ protected:
     QOpenGLBuffer* colors;
     QOpenGLBuffer* indices;
 
+    GLfloat* raw_vertices;
+    GLfloat* raw_colors;
+    GLuint* raw_indices;
+
 public:
-    DrawableObject(size_t, size_t);
+    DrawableObject();
     virtual ~DrawableObject();
 
     size_t bytes_v() const;

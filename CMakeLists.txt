@@ -33,6 +33,7 @@ set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
+    src/meshobject.cpp
     src/drawableobject.cpp
     src/axis.cpp
 )
@@ -41,6 +42,7 @@ set(SOURCES
 set(HEADERS
     include/mainwindow.h
     include/meshviewerwidget.h
+    include/meshobject.h
     include/drawableobject.h
     include/axis.h
 )

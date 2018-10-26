@@ -144,7 +144,7 @@ MeshViewerWidget::initializeGL()
 
 
     /* LOAD MESH */
-    MyMesh mesh;
+    /*MyMesh mesh;
     OpenMesh::IO::read_mesh(mesh, "../mesh_files/bunnyLowPoly.obj");
     mesh.request_vertex_colors();
 
@@ -204,7 +204,7 @@ MeshViewerWidget::initializeGL()
 
     delete [] vertices;
     delete [] IndiceArray;
-
+    */
     /* ------------------- */
 
     glEnable(GL_DEPTH_TEST);
