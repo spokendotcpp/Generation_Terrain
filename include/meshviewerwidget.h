@@ -46,6 +46,7 @@ private:
     std::chrono::time_point<HRClock> lap;
 
     bool mouse_pressed;
+    bool wheel_pressed;
     QPoint mouse;
 
     QVector3D angle;

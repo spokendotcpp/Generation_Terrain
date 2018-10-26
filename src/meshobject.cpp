@@ -18,7 +18,7 @@ MeshObject::MeshObject(const std::string& filename)
     nb_vertices = mesh.n_vertices() * 3;
     nb_indices = mesh.n_faces() * 3;
 
-    // COPY INDICES FROM MESH STRUCT TO OURS
+    // copy indices
     raw_indices = new GLuint[nb_indices];
     MyMesh::ConstFaceVertexIter cfv_It;
 
@@ -28,30 +28,22 @@ MeshObject::MeshObject(const std::string& filename)
         cfv_It = mesh.cfv_iter(cf_It);
         for(j=0; j < 3; ++j, ++i, ++cfv_It){
             raw_indices[i] = static_cast<GLuint>(cfv_It->idx());
-
         }
     }
 
-    // COPY VERTICES COORDINATES FROM MESH STRUCT TO OURS
+    // copy vertices & their colors
     i = 0;
     MyMesh::Point p;
-
-    raw_vertices = new GLfloat[nb_vertices];
-    for( const auto& cv_It: mesh.vertices() ){
-        p = mesh.point(cv_It);
-        for(j=0; j < 3; ++j, ++i){
-            raw_vertices[i] = p[j];
-        }
-    }
-
-    // COPY COLORS FROM MESH STRUCT TO OURS
-    i = 0;
     MyMesh::Color c;
 
+    raw_vertices = new GLfloat[nb_vertices];
     raw_colors = new GLfloat[nb_vertices];
+
     for( const auto& cv_It: mesh.vertices() ){
+        p = mesh.point(cv_It);
         c = mesh.color(cv_It);
         for(j=0; j < 3; ++j, ++i){
+            raw_vertices[i] = p[j];
             raw_colors[i] = c[j];
         }
     }

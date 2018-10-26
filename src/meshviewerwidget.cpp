@@ -6,7 +6,10 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QGLWidget(parent)
 {
     setMouseTracking(true);
+
     mouse_pressed = false;
+    wheel_pressed = false;
+
     lap = HRClock::now();
 
     axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
@@ -158,7 +161,7 @@ void
 MeshViewerWidget::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
-    update_projection();
+    //update_projection();
     updateGL();
 }
 
@@ -199,6 +202,16 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
         update_view();
         updateGL();
     }
+    else
+    if( wheel_pressed ){
+        float step = 0.005f;
+
+        position.setX(position.x() + ((pos.x() - mouse.x())*step));
+        position.setY(position.y() - ((pos.y() - mouse.y())*step));
+
+        update_view();
+        updateGL();
+    }
 
     mouse = pos;
 }
@@ -207,7 +220,10 @@ void
 MeshViewerWidget::mousePressEvent(QMouseEvent* event)
 {
     if( event->button() == Qt::MouseButton::LeftButton )
-       mouse_pressed = true;
+        mouse_pressed = true;
+    else
+    if( event->button() == Qt::MouseButton::MiddleButton )
+        wheel_pressed = true;
 }
 
 void
@@ -215,6 +231,9 @@ MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     if( event->button() == Qt::MouseButton::LeftButton )
         mouse_pressed = false;
+    else
+    if( event->button() == Qt::MouseButton::MiddleButton )
+        wheel_pressed = false;
 }
 
 /*
