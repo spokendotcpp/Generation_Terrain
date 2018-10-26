@@ -8,12 +8,13 @@
 // TODO : ERASE FROM MEMORY RAW ARRAY BEFORE DRAWING
 
 class DrawableObject {
-public:
+
+// (protected) -> only usable by inheritance
+protected:
     size_t nb_vertices;
     size_t nb_indices;
 
-protected:
-    QOpenGLVertexArrayObject* buffers;
+    QOpenGLVertexArrayObject* vao;
     QOpenGLBuffer* vertices;
     QOpenGLBuffer* colors;
     QOpenGLBuffer* indices;
@@ -31,6 +32,10 @@ public:
 
     virtual void init(QOpenGLShaderProgram*) =0;
     virtual void show(GLenum mode) const =0;
+
+protected:
+    void free_raw_memory();
+    void free_buffers();
 };
 
 #endif // DRAWABLEOBJECT_H

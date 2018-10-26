@@ -18,6 +18,7 @@
 #include <QMatrix4x4>
 
 #include "../include/axis.h"
+#include "../include/meshobject.h"
 
 typedef std::chrono::high_resolution_clock HRClock;
 
@@ -55,6 +56,7 @@ private:
     float zFar;
 
     Axis* axis;
+    MeshObject* bunny;
 
 /* Public methods */
 public:

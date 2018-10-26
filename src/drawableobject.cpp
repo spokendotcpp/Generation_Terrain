@@ -5,7 +5,7 @@
 DrawableObject::DrawableObject():
     nb_vertices(0),
     nb_indices(0),
-    buffers(nullptr),
+    vao(nullptr),
     vertices(nullptr),
     colors(nullptr),
     indices(nullptr),
@@ -17,10 +17,21 @@ DrawableObject::DrawableObject():
 
 DrawableObject::~DrawableObject()
 {
-    if( buffers != nullptr ){
-        buffers->destroy();
-        delete buffers;
-        buffers = nullptr;
+    free_buffers();
+
+    // if user didn't do it.
+    free_raw_memory();
+
+    nb_vertices = 0;
+    nb_indices = 0;
+}
+
+void DrawableObject::free_buffers()
+{
+    if( vao != nullptr ){
+        vao->destroy();
+        delete vao;
+        vao = nullptr;
     }
 
     if( vertices != nullptr ){
@@ -40,7 +51,10 @@ DrawableObject::~DrawableObject()
         delete indices;
         indices = nullptr;
     }
+}
 
+void DrawableObject::free_raw_memory()
+{
     if( raw_vertices != nullptr ){
         delete [] raw_vertices;
         raw_vertices = nullptr;
@@ -56,11 +70,6 @@ DrawableObject::~DrawableObject()
         delete [] raw_indices;
         raw_indices = nullptr;
     }
-
-    nb_vertices = 0;
-    nb_indices = 0;
-
-    std::cerr << "DrawableObject destroyed" << std::endl;
 }
 
 size_t DrawableObject::bytes_i() const

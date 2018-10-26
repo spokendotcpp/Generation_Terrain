@@ -9,7 +9,8 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     mouse_pressed = false;
     lap = HRClock::now();
 
-    axis = new Axis(0.0f, 0.0f, 0.0f, 2.0f);
+    axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
+    bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
 }
 
 /*
@@ -28,6 +29,11 @@ MeshViewerWidget::~MeshViewerWidget()
     if( axis != nullptr ){
         delete axis;
         axis = nullptr;
+    }
+
+    if( bunny != nullptr ){
+        delete bunny;
+        bunny = nullptr;
     }
 }
 
@@ -112,8 +118,6 @@ MeshViewerWidget::default_positions()
     default_projection();
 }
 
-int nb_indices = 0;
-
 /* Setup our OpenGL context
  * Vertex Array Buffer,
  * Vertex Buffer Object,
@@ -135,77 +139,13 @@ MeshViewerWidget::initializeGL()
     program->addShaderFromSourceFile(QOpenGLShader::Fragment, "../shaders/simple.frag.glsl");
     program->link();
     program->bind();
-
-    loc_MVP = program->uniformLocation("MVP");
-
-    axis->init(program);
-
+    {
+        loc_MVP = program->uniformLocation("MVP");
+        axis->init(program);
+        bunny->init(program);
+    }
     program->release();
 
-
-    /* LOAD MESH */
-    /*MyMesh mesh;
-    OpenMesh::IO::read_mesh(mesh, "../mesh_files/bunnyLowPoly.obj");
-    mesh.request_vertex_colors();
-
-    GLuint* IndiceArray = new GLuint[mesh.n_faces() * 3];
-    MyMesh::ConstFaceVertexIter fvIt;
-
-    // Copy Indices
-    size_t i = 0;
-    size_t j = 0;
-    for( const auto& fIt: mesh.faces() ){
-        fvIt = mesh.cfv_iter(fIt);
-        j+=3;
-        while( i < j ){
-            IndiceArray[i++] = static_cast<GLuint>(fvIt->idx());
-            ++fvIt;
-        }
-    }
-
-    nb_indices = j;
-
-    // Copy points
-    i = 0;
-    GLfloat* vertices = new GLfloat[mesh.n_vertices() * 3];
-    for( const auto& vIt: mesh.vertices() ){
-        MyMesh::Point p = mesh.point(vIt);
-        for(j=0; j < 3; ++j, ++i){
-            vertices[i] = p[j];
-            //std::cerr << vertices[i] << std::endl;
-        }
-    }
-
-    program->bind();
-
-    vao_mesh = new QOpenGLVertexArrayObject();
-    vao_mesh->create();
-    vao_mesh->bind();
-
-    QOpenGLBuffer* vbo_mesh = new QOpenGLBuffer();
-    vbo_mesh->create();
-    vbo_mesh->bind();
-    vbo_mesh->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    vbo_mesh->allocate(vertices, sizeof(GLfloat) * mesh.n_vertices()*3);
-
-    QOpenGLBuffer* ibo_mesh = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-    ibo_mesh->create();
-    ibo_mesh->bind();
-    ibo_mesh->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    ibo_mesh->allocate(IndiceArray, sizeof(GLuint) * mesh.n_faces()*3);
-
-    program->enableAttributeArray(program->attributeLocation("position"));
-    program->setAttributeBuffer(program->attributeLocation("position"), GL_FLOAT, 0, 3);
-
-    vao_mesh->release();
-    vbo_mesh->release();
-    ibo_mesh->release();
-    program->release();
-
-    delete [] vertices;
-    delete [] IndiceArray;
-    */
-    /* ------------------- */
 
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
@@ -236,14 +176,14 @@ MeshViewerWidget::paintGL()
     update_ModelViewProjection();    
 
     program->bind();
-    program->setUniformValue(loc_MVP, MVP);// Send matrix_world value to Vertex Shader
+    {
+        // Send matrix_world value to Vertex Shader
+        program->setUniformValue(loc_MVP, MVP);
 
-    axis->show(GL_LINES);
-
-    vao_mesh->bind();
-    glDrawElements(GL_TRIANGLES, nb_indices, GL_UNSIGNED_INT, nullptr);
-    vao_mesh->release();
-
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        axis->show(GL_LINES);
+        bunny->show(GL_TRIANGLES);
+    }
     program->release();
 }
 
@@ -277,18 +217,26 @@ MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
         mouse_pressed = false;
 }
 
+/*
+ * Make sure that position.z()
+ * stay between ]zNear+step & zFar-step[
+*/
 void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    float step = 0.25f; // TODO? change this by something more efficient
-    // i.e.: more the object go far, more we slow speed step.
+    float step = 0.25f;
+    float z = position.z();
 
-    /* TODO:
-     * Test if object goes outside of zNear & zFar positions.
-     */
-
-    if( event->delta() < 0 ) position.setZ(position.z()-step);  /* Wheel go down */
-    else                     position.setZ(position.z()+step);  /* Wheel go up */
+    /* Wheel go down */
+    if( event->delta() < 0 ){
+        if( -z < (zFar-step) )
+            position.setZ(z-step);
+    }
+    /* Wheel go up */
+    else {
+        if( -z > (zNear+step) )
+            position.setZ(z+step);
+    }
 
     update_view();
     updateGL();
@@ -313,7 +261,7 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         position.setX(position.x()-step);
     else
     if( key == Qt::Key_V )
-        default_positions();
+        default_view();
 
     update_view();
     updateGL();

@@ -38,9 +38,9 @@ Axis::Axis(float _x, float _y, float _z, float _length)
 
 void Axis::init(QOpenGLShaderProgram* program)
 {
-    buffers = new QOpenGLVertexArrayObject();
-    if( buffers->create() ){
-        buffers->bind();
+    vao = new QOpenGLVertexArrayObject();
+    if( vao->create() ){
+        vao->bind();
 
         int loc_position = program->attributeLocation("position");
         int loc_colors = program->attributeLocation("inColor");
@@ -72,16 +72,18 @@ void Axis::init(QOpenGLShaderProgram* program)
         program->enableAttributeArray(loc_colors);
         program->setAttributeArray(loc_colors, GL_FLOAT, nullptr, 3);
 
-        buffers->release();
+        vao->release();
         indices->release();
         vertices->release();
         colors->release();
+
+        free_raw_memory();
     }
 }
 
 void Axis::show(GLenum mode) const
 {
-    buffers->bind();
+    vao->bind();
     glDrawElements(mode, static_cast<GLsizei>(nb_indices), GL_UNSIGNED_INT, nullptr);
-    buffers->release();
+    vao->release();
 }
