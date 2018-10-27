@@ -2,8 +2,9 @@
 
 in vec3 position;
 in vec3 inColor;
-out vec3 color_from_vshader;
 uniform mat4 MVP;
+
+out vec3 color_from_vshader;
 
 void main()
 {

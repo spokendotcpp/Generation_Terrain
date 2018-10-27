@@ -1,7 +1,7 @@
 #include "../include/mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent):
-    QMainWindow(parent), mesh_viewer(new MeshViewerWidget())
+    QMainWindow(parent), mesh_viewer(new MeshViewerWidget(this))
 {
     this->setWindowTitle("Projet 5 : Génération de terrain");
     this->setCentralWidget(mesh_viewer);

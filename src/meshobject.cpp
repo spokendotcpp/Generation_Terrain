@@ -44,7 +44,7 @@ MeshObject::MeshObject(const std::string& filename)
         c = mesh.color(cv_It);
         for(j=0; j < 3; ++j, ++i){
             raw_vertices[i] = p[j];
-            raw_colors[i] = c[j];
+            raw_colors[i] = c[j]/255.0f;
         }
     }
 
@@ -81,7 +81,6 @@ void MeshObject::init(QOpenGLShaderProgram* program)
         indices->setUsagePattern(QOpenGLBuffer::StaticDraw);
         indices->allocate(raw_indices, static_cast<int>(bytes_i()));
 
-
         vertices = new QOpenGLBuffer();
         if( !vertices->create() ){
             std::cerr << "Failed to create VBO for vertices" << std::endl;
@@ -93,7 +92,6 @@ void MeshObject::init(QOpenGLShaderProgram* program)
 
         program->enableAttributeArray(loc_position); // TODO: move this part somewhere else (New Class)
         program->setAttributeArray(loc_position, GL_FLOAT, nullptr, 3);
-
 
         colors = new QOpenGLBuffer();
         if( !colors->create() ){

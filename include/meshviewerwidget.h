@@ -42,8 +42,8 @@ private:
     QMatrix4x4 MVP;
     GLint loc_MVP; // ID which link variable between CPU & GPU
 
-    // Time elapsed between the two last frames.
     std::chrono::time_point<HRClock> lap;
+    float fps;
 
     bool mouse_pressed;
     bool wheel_pressed;
@@ -83,6 +83,8 @@ public:
      * See mainwindow.cpp > keyPressEvent method.
      */
     void handle_key_events(QKeyEvent*);
+
+    void compute_fps();
 
 /* Private methods */
 private:

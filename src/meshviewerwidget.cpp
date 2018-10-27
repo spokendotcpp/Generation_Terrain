@@ -11,6 +11,7 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     wheel_pressed = false;
 
     lap = HRClock::now();
+    fps = 0.0f;
 
     axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
     bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
@@ -149,7 +150,6 @@ MeshViewerWidget::initializeGL()
     }
     program->release();
 
-
     glEnable(GL_DEPTH_TEST);
     //glEnable(GL_CULL_FACE);
     glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
@@ -169,9 +169,7 @@ MeshViewerWidget::resizeGL(int width, int height)
 void
 MeshViewerWidget::paintGL()
 {
-    auto current_time = HRClock::now();
-    std::cerr << "Time: " << std::chrono::duration_cast<std::chrono::milliseconds>(current_time-lap).count() << " ms" << std::endl;
-    lap = current_time;
+    compute_fps();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -183,7 +181,7 @@ MeshViewerWidget::paintGL()
         // Send matrix_world value to Vertex Shader
         program->setUniformValue(loc_MVP, MVP);
 
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         axis->show(GL_LINES);
         bunny->show(GL_TRIANGLES);
     }
@@ -284,4 +282,18 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
 
     update_view();
     updateGL();
+}
+
+void
+MeshViewerWidget::compute_fps()
+{
+    ++fps;
+    HRClock::time_point curr_lap = HRClock::now();
+    long time = std::chrono::duration_cast<std::chrono::milliseconds>(curr_lap-lap).count();
+    if( time >= 1000 ){
+        float ms_per_frame = 1000.0f/fps;
+        std::cerr << ms_per_frame << " ms/frame" << std::endl;
+        fps = 0.0f;
+        lap = curr_lap;
+    }
 }
