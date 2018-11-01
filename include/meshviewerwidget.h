@@ -30,17 +30,14 @@ class MeshViewerWidget: public QGLWidget
 {
 /* Private members */
 private:
-    QOpenGLVertexArrayObject* vao_mesh;
-    QOpenGLShaderProgram* program; // Shader program
+    //ShaderProgram* program; // Shader program
+    QOpenGLShaderProgram* program;
+
 
     /* Matrix which compose our Model View Projection Matrix */
     QMatrix4x4 model;
     QMatrix4x4 view;
     QMatrix4x4 projection;
-
-    /* The Model <-> View <-> Projection Matrix */
-    QMatrix4x4 MVP;
-    GLint loc_MVP; // ID which link variable between CPU & GPU
 
     std::chrono::time_point<HRClock> lap;
     float fps;
@@ -84,7 +81,7 @@ public:
      */
     void handle_key_events(QKeyEvent*);
 
-    void compute_fps();
+    float delay();
 
 /* Private methods */
 private:

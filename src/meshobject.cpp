@@ -6,15 +6,42 @@ MeshObject::MeshObject(const std::string& filename)
     :DrawableObject()
 {
     MyMesh mesh;
-    OpenMesh::IO::read_mesh(mesh, filename);
+
+    OpenMesh::IO::Options opt;
+    OpenMesh::IO::read_mesh(mesh, filename, opt);
+
+    // If the file did not provide vertex normals, then calculate them
+    if ( !opt.check( OpenMesh::IO::Options::VertexNormal ) )
+    {
+
+        std::cerr << "Aie" << std::endl;
+
+      // we need face normals to update the vertex normals
+      mesh.request_face_normals();
+      mesh.request_vertex_normals();
+      // let the mesh update the normals
+      mesh.update_normals();
+      mesh.update_vertex_normals();
+
+      // dispose the face normals, as we don't need them anymore
+      mesh.release_face_normals();
+    }
+
+
     /* LOAD EVERYTHING NEEDED INTO THE MESH */
     mesh.request_vertex_colors();
+    mesh.request_vertex_normals();
 
     if( !mesh.has_vertex_colors() ){
         std::cerr << "Failed to request vertex colors" << std::endl;
     }
+
+    if( !mesh.has_vertex_normals() ){
+        std::cerr << "Failed to request vertex normals" << std::endl;
+    }
     /* ------------------------------------ */
 
+    /*
     nb_vertices = mesh.n_vertices() * 3;
     nb_indices = mesh.n_faces() * 3;
 
@@ -35,88 +62,23 @@ MeshObject::MeshObject(const std::string& filename)
     i = 0;
     MyMesh::Point p;
     MyMesh::Color c;
+    MyMesh::Normal n;
 
     raw_vertices = new GLfloat[nb_vertices];
     raw_colors = new GLfloat[nb_vertices];
+    raw_normals = new GLfloat[nb_vertices];
 
     for( const auto& cv_It: mesh.vertices() ){
+        n = mesh.normal(cv_It);
         p = mesh.point(cv_It);
         c = mesh.color(cv_It);
         for(j=0; j < 3; ++j, ++i){
             raw_vertices[i] = p[j];
             raw_colors[i] = c[j]/255.0f;
+            //raw_normals[i] = p[j];
         }
-    }
+    }*/
 
     mesh.release_vertex_colors();
-}
-
-MeshObject::~MeshObject()
-{}
-
-void MeshObject::init(QOpenGLShaderProgram* program)
-{   
-    if( !program->isLinked() ){
-        std::cerr << "Program shader not linked" << std::endl;
-        return;
-    }
-
-    vao = new QOpenGLVertexArrayObject();
-    if( !vao->create() ){
-        std::cerr << "Failed to create VAO" << std::endl;
-        return;
-    }
-
-    vao->bind();
-    {
-        int loc_position = program->attributeLocation("position");
-        int loc_colors = program->attributeLocation("inColor");
-
-        indices = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
-        if( !indices->create() ){
-            std::cerr << "Failed to create Index Buffer" << std::endl;
-            return;
-        }
-        indices->bind();
-        indices->setUsagePattern(QOpenGLBuffer::StaticDraw);
-        indices->allocate(raw_indices, static_cast<int>(bytes_i()));
-
-        vertices = new QOpenGLBuffer();
-        if( !vertices->create() ){
-            std::cerr << "Failed to create VBO for vertices" << std::endl;
-            return;
-        }
-        vertices->bind();
-        vertices->setUsagePattern(QOpenGLBuffer::StaticDraw);
-        vertices->allocate(raw_vertices, static_cast<int>(bytes_v()));
-
-        program->enableAttributeArray(loc_position); // TODO: move this part somewhere else (New Class)
-        program->setAttributeArray(loc_position, GL_FLOAT, nullptr, 3);
-
-        colors = new QOpenGLBuffer();
-        if( !colors->create() ){
-            std::cerr << "Failed to create VBO for colors" << std::endl;
-            return;
-        }
-        colors->bind();
-        colors->setUsagePattern(QOpenGLBuffer::StaticDraw);
-        colors->allocate(raw_colors, static_cast<int>(bytes_v()));
-
-        program->enableAttributeArray(loc_colors);
-        program->setAttributeArray(loc_colors, GL_FLOAT, nullptr, 3);
-    }
-    vao->release();
-    indices->release();
-    vertices->release();
-    colors->release();
-
-    free_raw_memory();
-}
-
-
-void MeshObject::show(GLenum mode) const
-{
-    vao->bind();
-    glDrawElements(mode, static_cast<GLsizei>(nb_indices), GL_UNSIGNED_INT, nullptr);
-    vao->release();
+    mesh.release_vertex_normals();
 }

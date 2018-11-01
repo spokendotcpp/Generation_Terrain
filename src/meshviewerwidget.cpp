@@ -1,6 +1,6 @@
 #include <iostream>
+
 #include "../include/meshviewerwidget.h"
-#include "../include/axis.h"
 
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QGLWidget(parent)
@@ -12,9 +12,10 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 
     lap = HRClock::now();
     fps = 0.0f;
+    // bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
 
-    axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
-    bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
+    axis = nullptr;
+    bunny = nullptr;
 }
 
 /*
@@ -76,16 +77,6 @@ MeshViewerWidget::update_projection()
     );
 }
 
-/* Matrix computation on CPU
- * -> must be call only when needed.
- * i.e.: before rendering.
-*/
-void
-MeshViewerWidget::update_ModelViewProjection()
-{   
-    MVP = projection * view * model;
-}
-
 /* Load default values for the model matrix + update */
 void
 MeshViewerWidget::default_model()
@@ -138,20 +129,27 @@ MeshViewerWidget::initializeGL()
         return;
     }
 
+    if( QGLFormat::openGLVersionFlags() < QGLFormat::OpenGL_Version_3_0 ){
+        std::cerr << "Your OpenGL version is under 3.0" << std::endl;
+        std::cerr << "Program might failed to run." << std::endl;
+    }
+
+    // Create Object :
+    axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
+
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
     program->addShaderFromSourceFile(QOpenGLShader::Fragment, "../shaders/simple.frag.glsl");
     program->link();
     program->bind();
     {
-        loc_MVP = program->uniformLocation("MVP");
         axis->init(program);
-        bunny->init(program);
+        // bunny->init(program);
     }
     program->release();
 
     glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
     glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
     default_positions();
 }
@@ -161,7 +159,7 @@ void
 MeshViewerWidget::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
-    //update_projection();
+    update_projection();
     updateGL();
 }
 
@@ -169,21 +167,20 @@ MeshViewerWidget::resizeGL(int width, int height)
 void
 MeshViewerWidget::paintGL()
 {
-    compute_fps();
+    std::cerr << delay() << " ms" << std::endl;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    /* update the MVP matrix */
-    update_ModelViewProjection();    
-
     program->bind();
     {
-        // Send matrix_world value to Vertex Shader
-        program->setUniformValue(loc_MVP, MVP);
+        // Send uniform values (view, model & projection matrix) to Vertex Shader
+        program->setUniformValue("view", view);
+        program->setUniformValue("model", model);
+        program->setUniformValue("projection", projection);
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         axis->show(GL_LINES);
-        bunny->show(GL_TRIANGLES);
+        // bunny->show(GL_TRIANGLES);
     }
     program->release();
 }
@@ -284,16 +281,12 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
     updateGL();
 }
 
-void
-MeshViewerWidget::compute_fps()
+float
+MeshViewerWidget::delay()
 {
-    ++fps;
     HRClock::time_point curr_lap = HRClock::now();
-    long time = std::chrono::duration_cast<std::chrono::milliseconds>(curr_lap-lap).count();
-    if( time >= 1000 ){
-        float ms_per_frame = 1000.0f/fps;
-        std::cerr << ms_per_frame << " ms/frame" << std::endl;
-        fps = 0.0f;
-        lap = curr_lap;
-    }
+    long mcs = std::chrono::duration_cast<std::chrono::microseconds>(curr_lap-lap).count();
+    lap = curr_lap;
+
+    return mcs * 0.001f;
 }

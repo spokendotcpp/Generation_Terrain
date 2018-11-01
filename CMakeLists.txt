@@ -35,7 +35,6 @@ set(SOURCES
     src/meshviewerwidget.cpp
     src/meshobject.cpp
     src/drawableobject.cpp
-    src/shader.cpp
     src/axis.cpp
 )
 
@@ -45,7 +44,6 @@ set(HEADERS
     include/meshviewerwidget.h
     include/meshobject.h
     include/drawableobject.h
-    include/shader.h
     include/axis.h
 )
 

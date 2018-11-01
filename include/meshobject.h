@@ -15,11 +15,10 @@ typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
 
 class MeshObject : public DrawableObject
 {
+private:
+
 public:
     MeshObject(const std::string&);
-    ~MeshObject() override;
-    void init(QOpenGLShaderProgram*) override;
-    void show(GLenum) const override;
 };
 
 #endif // MESHOBJECT_H

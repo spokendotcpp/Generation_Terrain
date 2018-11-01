@@ -10,10 +10,8 @@ private:
     float length;
 
 public:
-    Axis(float=0.0f, float=0.0f, float=0.0f, float=5.0f);
-
-    void init(QOpenGLShaderProgram*) override;
-    void show(GLenum=GL_POINTS) const override;
+    Axis(float x=0.0f, float y=0.0f, float z=0.0f, float length=5.0f);
+    void init(QOpenGLShaderProgram* program);
 };
 
 #endif // AXIS_H

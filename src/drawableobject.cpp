@@ -3,81 +3,64 @@
 #include <iostream>
 
 DrawableObject::DrawableObject():
-    nb_vertices(0),
-    nb_indices(0),
-    vao(nullptr),
-    vertices(nullptr),
-    colors(nullptr),
-    indices(nullptr),
-    raw_vertices(nullptr),
-    raw_colors(nullptr),
-    raw_indices(nullptr)
-{}
+    nb_elements(0),
+    vao(new QOpenGLVertexArrayObject()),
+    ebo(new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer)),
+    vbo(new QOpenGLBuffer())
+{
+   vao->create();
+   ebo->create();
+   vbo->create();
+}
 
 
 DrawableObject::~DrawableObject()
 {
+    // In case user didn't called it into overloaded `init()` function.
     free_buffers();
 
-    // if user didn't do it.
-    free_raw_memory();
-
-    nb_vertices = 0;
-    nb_indices = 0;
-}
-
-void DrawableObject::free_buffers()
-{
     if( vao != nullptr ){
         vao->destroy();
         delete vao;
         vao = nullptr;
     }
 
-    if( vertices != nullptr ){
-        vertices->destroy();
-        delete vertices;
-        vertices = nullptr;
-    }
-
-    if( colors != nullptr ){
-        colors->destroy();
-        delete colors;
-        colors = nullptr;
-    }
-
-    if( indices != nullptr ){
-        indices->destroy();
-        delete indices;
-        indices = nullptr;
-    }
+    nb_elements = 0;
 }
 
-void DrawableObject::free_raw_memory()
+
+void
+DrawableObject::show(GLenum mode) const
 {
-    if( raw_vertices != nullptr ){
-        delete [] raw_vertices;
-        raw_vertices = nullptr;
-    }
-
-    if( raw_colors != nullptr ){
-        delete [] raw_colors;
-        raw_colors = nullptr;
-    }
-
-
-    if( raw_indices != nullptr ){
-        delete [] raw_indices;
-        raw_indices = nullptr;
-    }
+    vao->bind();
+    glDrawElements(mode, nb_elements, GL_UNSIGNED_INT, nullptr);
+    vao->release();
 }
 
-size_t DrawableObject::bytes_i() const
+void
+DrawableObject::drawable_elements(GLsizei amount)
 {
-    return sizeof(GLuint) * nb_indices;
+    nb_elements = amount;
 }
 
-size_t DrawableObject::bytes_v() const
+GLsizei
+DrawableObject::drawable_elements() const
 {
-    return sizeof(GLfloat) * nb_vertices;
+    return nb_elements;
+}
+
+void
+DrawableObject::free_buffers()
+{
+    if( ebo != nullptr ){
+        ebo->destroy();
+        delete ebo;
+        ebo = nullptr;
+    }
+
+    if( vbo != nullptr ){
+        vbo->destroy();
+        delete vbo;
+        vbo = nullptr;
+    }
 }
