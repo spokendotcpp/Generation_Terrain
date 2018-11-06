@@ -135,8 +135,6 @@ MeshViewerWidget::initializeGL()
     // Create Object(s) :
     axis = new Axis(0.0f, 0.0f, 0.0f, 3.0f);
     bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
-    // new MeshObject("../mesh_files/cube.obj");
-    //new MeshObject("../mesh_files/bunnyLowPoly.obj");
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -179,7 +177,6 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("model", model);
         program->setUniformValue("projection", projection);
 
-        // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         axis->show(GL_LINES);
         bunny->show(GL_TRIANGLES);
     }
@@ -279,6 +276,12 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
     else
     if( key == Qt::Key_V )
         default_view();
+    else
+    if( key == Qt::Key_F )
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else
+    if( key == Qt::Key_D )
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     update_view();
     updateGL();

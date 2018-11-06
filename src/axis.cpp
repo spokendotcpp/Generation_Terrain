@@ -11,8 +11,8 @@ void Axis::init(QOpenGLShaderProgram* program)
 {
     float half = length/2.0f;
 
-    unsigned long nb_vertices = 18;
-    unsigned long nb_indices = 6;
+    size_t nb_vertices = 18;
+    size_t nb_indices = 6;
 
     GLfloat* raw_vertices = new GLfloat[nb_vertices] {
         x-half, y, z,
@@ -45,7 +45,7 @@ void Axis::init(QOpenGLShaderProgram* program)
         ebo->allocate(raw_indices, static_cast<int>(sizeof(GLuint)*nb_indices));
 
         // bytes size of vertices into memory :
-        int vertices_bytes = static_cast<int>(sizeof(GLfloat) * nb_vertices);
+        int vertices_bytes = static_cast<int>(sizeof(GLfloat)*nb_vertices);
 
         vbo->bind();
         vbo->setUsagePattern(QOpenGLBuffer::StaticDraw);
@@ -84,5 +84,5 @@ void Axis::init(QOpenGLShaderProgram* program)
     delete [] raw_colors;
     delete [] raw_indices;
 
-    this->drawable_elements(static_cast<GLsizei>(nb_vertices));
+    this->drawable_elements(static_cast<GLsizei>(nb_indices));
 }
