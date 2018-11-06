@@ -16,9 +16,14 @@ typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
 class MeshObject : public DrawableObject
 {
 private:
+    MyMesh mesh;
 
 public:
     MeshObject(const std::string&);
+    ~MeshObject() override;
+
+    void init(QOpenGLShaderProgram* program) override;
+    void show(GLenum mode) const override;
 };
 
 #endif // MESHOBJECT_H

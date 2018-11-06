@@ -40,7 +40,6 @@ private:
     QMatrix4x4 projection;
 
     std::chrono::time_point<HRClock> lap;
-    float fps;
 
     bool mouse_pressed;
     bool wheel_pressed;
@@ -88,12 +87,11 @@ private:
     void default_model();
     void default_view();
     void default_projection();
-    void default_positions();
+    void default_ModelViewPosition();
 
     void update_model();
     void update_view();
     void update_projection();
-    void update_ModelViewProjection();
 };
 
 #endif // MESHVIEWERWIDGET_H

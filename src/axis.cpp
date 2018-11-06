@@ -26,10 +26,10 @@ void Axis::init(QOpenGLShaderProgram* program)
     GLfloat* raw_colors = new GLfloat[nb_vertices] {
         1.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f,
         0.0f, 0.0f, 1.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
     };
 
     GLuint* raw_indices = new GLuint[nb_indices] {
@@ -77,12 +77,12 @@ void Axis::init(QOpenGLShaderProgram* program)
     // No more needs of Buffers
     ebo->release();
     vbo->release();
+    this->free_buffers();
 
+    // Free raw memory
     delete [] raw_vertices;
     delete [] raw_colors;
     delete [] raw_indices;
-
-    this->free_buffers();
 
     this->drawable_elements(static_cast<GLsizei>(nb_vertices));
 }

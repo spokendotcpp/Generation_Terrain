@@ -11,8 +11,6 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     wheel_pressed = false;
 
     lap = HRClock::now();
-    fps = 0.0f;
-    // bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
 
     axis = nullptr;
     bunny = nullptr;
@@ -90,7 +88,7 @@ void
 MeshViewerWidget::default_view()
 {
     angle = QVector3D(25.0f, 25.0f, 0.0f);
-    position = QVector3D(0.0f, 0.0f, -2.0f);
+    position = QVector3D(0.0f, 0.0f, -5.0f);
     update_view();
 }
 
@@ -106,7 +104,7 @@ MeshViewerWidget::default_projection()
 
 /* Load every defaults */
 void
-MeshViewerWidget::default_positions()
+MeshViewerWidget::default_ModelViewPosition()
 {
     default_model();
     default_view();
@@ -134,8 +132,11 @@ MeshViewerWidget::initializeGL()
         std::cerr << "Program might failed to run." << std::endl;
     }
 
-    // Create Object :
-    axis = new Axis(0.0f, 0.0f, 0.0f, 1.0f);
+    // Create Object(s) :
+    axis = new Axis(0.0f, 0.0f, 0.0f, 3.0f);
+    bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
+    // new MeshObject("../mesh_files/cube.obj");
+    //new MeshObject("../mesh_files/bunnyLowPoly.obj");
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -144,14 +145,14 @@ MeshViewerWidget::initializeGL()
     program->bind();
     {
         axis->init(program);
-        // bunny->init(program);
+        bunny->init(program);
     }
     program->release();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
-    default_positions();
+    default_ModelViewPosition();
 }
 
 /* When window (this widget) is resized */
@@ -180,7 +181,7 @@ MeshViewerWidget::paintGL()
 
         // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         axis->show(GL_LINES);
-        // bunny->show(GL_TRIANGLES);
+        bunny->show(GL_TRIANGLES);
     }
     program->release();
 }
@@ -241,6 +242,8 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
     float step = 0.25f;
     float z = position.z();
 
+    std::cerr << z << std::endl;
+
     /* Wheel go down */
     if( event->delta() < 0 ){
         if( -z < (zFar-step) )
@@ -287,6 +290,5 @@ MeshViewerWidget::delay()
     HRClock::time_point curr_lap = HRClock::now();
     long mcs = std::chrono::duration_cast<std::chrono::microseconds>(curr_lap-lap).count();
     lap = curr_lap;
-
     return mcs * 0.001f;
 }
