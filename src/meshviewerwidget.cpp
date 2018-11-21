@@ -1,19 +1,24 @@
 #include <iostream>
+#include <thread>
+#include <future>
 
 #include "../include/meshviewerwidget.h"
 
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
-    :QGLWidget(parent)
+    :QOpenGLWidget(parent)
 {
     setMouseTracking(true);
 
     mouse_pressed = false;
     wheel_pressed = false;
 
-    lap = HRClock::now();
+    frames = 0;
+    set_frames_per_second(60);
+    lap = Clock::now();
 
-    axis = nullptr;
     bunny = nullptr;
+    light = nullptr;
+    axis = nullptr;
 }
 
 /*
@@ -25,8 +30,14 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 MeshViewerWidget::~MeshViewerWidget()
 {
     if( program != nullptr ){
+        program->removeAllShaders();
         delete program;
         program = nullptr;
+    }
+
+    if( light != nullptr ){
+        delete light;
+        light = nullptr;
     }
 
     if( axis != nullptr ){
@@ -70,7 +81,7 @@ MeshViewerWidget::update_projection()
     projection.setToIdentity();
     projection.perspective(
         fov,
-        static_cast<float>(size().width()/size().height()),
+        window_ratio,
         zNear, zFar
     );
 }
@@ -98,7 +109,7 @@ MeshViewerWidget::default_projection()
 {
     fov = 45.0f;
     zNear = 0.1f;
-    zFar = 100.0f;
+    zFar = 1000.0f;
     update_projection();
 }
 
@@ -122,19 +133,17 @@ void
 MeshViewerWidget::initializeGL()
 {
     // Check if OpenGL context was successfully initialized
-    if( !context()->isValid() ){
+    if( !isValid() ){
         std::cerr << "Failed to init OpenGL context" << std::endl;
         return;
     }
 
-    if( QGLFormat::openGLVersionFlags() < QGLFormat::OpenGL_Version_3_0 ){
-        std::cerr << "Your OpenGL version is under 3.0" << std::endl;
-        std::cerr << "Program might failed to run." << std::endl;
-    }
-
     // Create Object(s) :
-    axis = new Axis(0.0f, 0.0f, 0.0f, 3.0f);
+    axis = new Axis();
+    axis->scale(50.0f, 50.0f, 50.0f);
+
     bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
+    bunny->scale(5.0f, 5.0f, 5.0f);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -142,15 +151,31 @@ MeshViewerWidget::initializeGL()
     program->link();
     program->bind();
     {
-        axis->init(program);
-        bunny->init(program);
+        light = new Light();
+        light->set_position(0.0f, 50.0f, 100.0f, program->uniformLocation("light_position"))
+             ->set_color(0.6f, 0.6f, 0.6f, program->uniformLocation("light_color"))
+             ->set_ambient(0.4f, program->uniformLocation("light_ambient"))
+             ->enable(program->uniformLocation("light_on"));
+
+        axis->build(program);
+        axis->update_buffers(program);
+
+        bunny->build(program);
+        bunny->use_unique_color(1.0f, 1.0f, 0.0f);
+        bunny->update_buffers(program);
     }
     program->release();
 
+    glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     default_ModelViewPosition();
+
+    // IDLE Function
+    startTimer(0);
+    startTimer(1000);
 }
 
 /* When window (this widget) is resized */
@@ -158,27 +183,44 @@ void
 MeshViewerWidget::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
+    window_ratio = width/float(height);
     update_projection();
-    updateGL();
+    update();
 }
 
 /* RENDER TIME */
 void
 MeshViewerWidget::paintGL()
 {
-    std::cerr << delay() << " ms" << std::endl;
+    long mcs = microseconds_diff(Clock::now(), lap);
+
+    if( mcs < frequency ){
+        std::this_thread::sleep_for(
+            std::chrono::microseconds(frequency - mcs)
+        );
+    }
+
+    update_lap();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     program->bind();
     {
-        // Send uniform values (view, model & projection matrix) to Vertex Shader
-        program->setUniformValue("view", view);
-        program->setUniformValue("model", model);
-        program->setUniformValue("projection", projection);
+        // in case user has modified light pos
+        light->to_gpu(program);
+        light->on(program);
 
-        axis->show(GL_LINES);
+        program->setUniformValue("projection", projection);
+        program->setUniformValue("view", view);
+        program->setUniformValue("view_inverse", view.transposed().inverted());
+
+        program->setUniformValue("model", bunny->model_matrix());
+        program->setUniformValue("model_inverse", bunny->model_matrix().transposed().inverted());
         bunny->show(GL_TRIANGLES);
+
+        light->off(program);
+        program->setUniformValue("model", axis->model_matrix());
+        axis->show(GL_LINES);
+        light->on(program);
     }
     program->release();
 }
@@ -193,17 +235,17 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
         angle.setX(angle.x() + pos.y() - mouse.y());
         angle.setY(angle.y() + pos.x() - mouse.x());
         update_view();
-        updateGL();
+        update();
     }
     else
     if( wheel_pressed ){
-        float step = 0.005f;
+        float step = 0.5f;
 
         position.setX(position.x() + ((pos.x() - mouse.x())*step));
         position.setY(position.y() - ((pos.y() - mouse.y())*step));
 
         update_view();
-        updateGL();
+        update();
     }
 
     mouse = pos;
@@ -229,6 +271,20 @@ MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
         wheel_pressed = false;
 }
 
+// IDLE Function: when no user inputs repaint
+void
+MeshViewerWidget::timerEvent(QTimerEvent* event)
+{
+    int id = event->timerId();
+
+    if( id == 1 )
+        update();
+    else {
+        std::cerr << "fps: " << frames << std::endl;
+        frames = 0;
+    }
+}
+
 /*
  * Make sure that position.z()
  * stay between ]zNear+step & zFar-step[
@@ -236,62 +292,98 @@ MeshViewerWidget::mouseReleaseEvent(QMouseEvent* event)
 void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    float step = 0.25f;
+    float step = 5.0f;
     float z = position.z();
-
-    std::cerr << z << std::endl;
 
     /* Wheel go down */
     if( event->delta() < 0 ){
-        if( -z < (zFar-step) )
+        if( -z < (zFar-step) ){
             position.setZ(z-step);
+            update_view();
+            update();
+        }
     }
     /* Wheel go up */
     else {
-        if( -z > (zNear+step) )
+        if( -z > (zNear+step) ){
             position.setZ(z+step);
+            update_view();
+            update();
+        }
     }
-
-    update_view();
-    updateGL();
 }
 
 void
 MeshViewerWidget::handle_key_events(QKeyEvent* event)
 {
-    float step = 0.25f;
-    int key = event->key();
+    float step = 5.0f;
 
-    if( key == Qt::Key_Up )
+    switch( event->key() ){
+    case Qt::Key_Up :
         position.setZ(position.z()+step);
-    else
-    if( key == Qt::Key_Down )
-        position.setZ(position.z()-step);
-    else
-    if( key == Qt::Key_Left )
-        position.setX(position.x()+step);
-    else
-    if( key == Qt::Key_Right )
-        position.setX(position.x()-step);
-    else
-    if( key == Qt::Key_V )
-        default_view();
-    else
-    if( key == Qt::Key_F )
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    else
-    if( key == Qt::Key_D )
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        update_view();
+        break;
 
-    update_view();
-    updateGL();
+    case Qt::Key_Down :
+        position.setZ(position.z()-step);
+        update_view();
+        break;
+
+    case Qt::Key_Left :
+        position.setX(position.x()+step);
+        update_view();
+        break;
+
+    case Qt::Key_Right :
+        position.setX(position.x()-step);
+        update_view();
+        break;
+
+    case Qt::Key_V :
+        default_view();
+        update_view();
+        break;
+
+    case Qt::Key_W :
+        makeCurrent();
+
+        GLint mode;
+        glGetIntegerv(GL_POLYGON_MODE, &mode);
+
+        if( mode == GL_FILL ){
+            light->disable();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        else {
+            light->enable(program->uniformLocation("light_on"));
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
+        doneCurrent();
+        break;
+    }
+
+    update();
 }
 
-float
-MeshViewerWidget::delay()
+void
+MeshViewerWidget::set_frames_per_second(size_t fps)
 {
-    HRClock::time_point curr_lap = HRClock::now();
-    long mcs = std::chrono::duration_cast<std::chrono::microseconds>(curr_lap-lap).count();
-    lap = curr_lap;
-    return mcs * 0.001f;
+    frequency = long(1.0f/fps * 1000000);
+}
+
+void
+MeshViewerWidget::update_lap()
+{
+    ++frames;
+    lap = Clock::now();
+}
+
+// The delay between two time in microseconds
+long
+MeshViewerWidget::microseconds_diff(
+        Clock::time_point t1,
+        Clock::time_point t2)
+{
+    return std::chrono::duration_cast<std::chrono::microseconds>(t1-t2).count();
 }

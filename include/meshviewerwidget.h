@@ -1,45 +1,49 @@
 #ifndef MESHVIEWERWIDGET_H
 #define MESHVIEWERWIDGET_H
 
-#include <vector>
 #include <chrono>
 
 #include <QApplication>
 #include <QScreen>
 #include <QSize>
 
+#include <QTimerEvent>
+
 #include <QMouseEvent>
 #include <QWheelEvent>
 
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QOpenGLBuffer>
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+
 #include <QMatrix4x4>
 
 #include "../include/axis.h"
 #include "../include/meshobject.h"
+#include "../include/light.h"
 
-typedef std::chrono::high_resolution_clock HRClock;
+typedef std::chrono::steady_clock Clock;
 
 /*
  * QGLWidget child class.
  */
 
-class MeshViewerWidget: public QGLWidget
+class MeshViewerWidget: public QOpenGLWidget
 {
 /* Private members */
 private:
     //ShaderProgram* program; // Shader program
     QOpenGLShaderProgram* program;
 
-
-    /* Matrix which compose our Model View Projection Matrix */
+    /* Matrix which compose our Model View Projection Matrix -- uniform values */
     QMatrix4x4 model;
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
-    std::chrono::time_point<HRClock> lap;
+    // FPS frequency as microseconds
+    long frequency;
+    Clock::time_point lap;
 
     bool mouse_pressed;
     bool wheel_pressed;
@@ -51,9 +55,13 @@ private:
     float fov;
     float zNear;
     float zFar;
+    float window_ratio;
 
-    Axis* axis;
+    size_t frames;
+
     MeshObject* bunny;
+    Light* light;
+    Axis* axis;
 
 /* Public methods */
 public:
@@ -71,6 +79,9 @@ public:
     void mousePressEvent(QMouseEvent*) override;
     void mouseReleaseEvent(QMouseEvent*) override;
 
+    /* QTimerEvent */
+    void timerEvent(QTimerEvent*) override;
+
     /* Wheel */
     void wheelEvent(QWheelEvent*) override;
 
@@ -80,7 +91,14 @@ public:
      */
     void handle_key_events(QKeyEvent*);
 
-    float delay();
+    /* caps frames per second */
+    void set_frames_per_second(size_t fps);
+
+    /* Difference between two high resolution clock time point as microseconds */
+    static long microseconds_diff(
+            Clock::time_point t1,
+            Clock::time_point t2
+    );
 
 /* Private methods */
 private:
@@ -92,6 +110,8 @@ private:
     void update_model();
     void update_view();
     void update_projection();
+
+    void update_lap();
 };
 
 #endif // MESHVIEWERWIDGET_H

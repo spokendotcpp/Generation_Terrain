@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(GenerationTerrain)
+project(Generation_De_Terrain)
 
 set(exe_name "fields_generation")
 
 # CMAKE QT OPTIONS
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
@@ -33,18 +32,20 @@ set(SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/meshviewerwidget.cpp
-    src/meshobject.cpp
     src/drawableobject.cpp
     src/axis.cpp
+    src/meshobject.cpp
+    src/light.cpp
 )
 
 # HEADERS FILES
 set(HEADERS
     include/mainwindow.h
     include/meshviewerwidget.h
-    include/meshobject.h
     include/drawableobject.h
     include/axis.h
+    include/meshobject.h
+    include/light.h
 )
 
 # EXE + LINKING
@@ -55,13 +56,17 @@ add_executable(
     collections.qrc
 )
 
+# -l
 target_link_libraries(
-    ${exe_name}
+    ${exe_name} PUBLIC
+
     Qt5::Widgets
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
+
+    ${OPENGL_LIBRARIES}
+
     OpenMeshCore
     OpenMeshTools
-    ${OPENGL_LIBRARIES}
 )

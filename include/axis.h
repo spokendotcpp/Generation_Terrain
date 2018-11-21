@@ -6,12 +6,9 @@
 class Axis : public DrawableObject
 {
 private:
-    float x, y, z;
-    float length;
-
 public:
-    Axis(float x=0.0f, float y=0.0f, float z=0.0f, float length=5.0f);
-    void init(QOpenGLShaderProgram* program);
+    Axis();
+    bool build(QOpenGLShaderProgram* program) override;
 };
 
 #endif // AXIS_H
