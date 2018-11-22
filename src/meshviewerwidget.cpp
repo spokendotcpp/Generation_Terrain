@@ -207,7 +207,6 @@ MeshViewerWidget::paintGL()
     {
         // in case user has modified light pos
         light->to_gpu(program);
-        light->on(program);
 
         program->setUniformValue("projection", projection);
         program->setUniformValue("view", view);
@@ -350,14 +349,10 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         GLint mode;
         glGetIntegerv(GL_POLYGON_MODE, &mode);
 
-        if( mode == GL_FILL ){
-            light->disable();
+        if( mode == GL_FILL )
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
-        else {
-            light->enable(program->uniformLocation("light_on"));
+        else
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
 
         doneCurrent();
         break;
