@@ -118,7 +118,8 @@ Light::enabled() const
 void
 Light::to_gpu(QOpenGLShaderProgram* program) const
 {
-    program->setUniformValue(uniform_location_is_on, is_on);
+    if( uniform_location_is_on >= 0 )
+        program->setUniformValue(uniform_location_is_on, is_on);
 
     if( uniform_location_position >= 0 )
         program->setUniformValue(uniform_location_position, *position);

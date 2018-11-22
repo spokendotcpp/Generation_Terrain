@@ -56,6 +56,12 @@ add_executable(
     collections.qrc
 )
 
+# -I
+target_include_directories(
+    ${exe_name} PUBLIC
+    ../lib/OpenMesh.7-1
+)
+
 # -l
 target_link_libraries(
     ${exe_name} PUBLIC
