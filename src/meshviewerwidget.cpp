@@ -58,25 +58,16 @@ MeshViewerWidget::~MeshViewerWidget()
     }
 }
 
-/* Update the model matrix
- * -> no specific actions yet.
-*/
-void
-MeshViewerWidget::update_model()
-{
-    model.setToIdentity();
-}
-
 /* Update the view matrix
  * i.e.: can be called after every user inputs (mouse, keyboard ...)
+ *
 */
 void
 MeshViewerWidget::update_view()
 {
     view.setToIdentity();
     view.translate(position);
-    view.rotate(angle.x(), 1.0f, 0.0f, 0.0f);
-    view.rotate(angle.y(), 0.0f, 1.0f, 0.0f);
+    view *= rotation;
 }
 
 /* Update the projection matrix
@@ -93,19 +84,13 @@ MeshViewerWidget::update_projection()
     );
 }
 
-/* Load default values for the model matrix + update */
-void
-MeshViewerWidget::default_model()
-{
-    /* ?? */
-    update_model();
-}
-
 /* Load default values for the view matrix + update */
 void
 MeshViewerWidget::default_view()
 {
-    angle = QVector3D(25.0f, 25.0f, 0.0f);
+    rotation = QMatrix4x4();
+    rotation.rotate(25.0f, 1.0f, 1.0f, 0.0f);
+
     position = QVector3D(0.0f, 0.0f, -5.0f);
     update_view();
 }
@@ -124,7 +109,6 @@ MeshViewerWidget::default_projection()
 void
 MeshViewerWidget::default_ModelViewPosition()
 {
-    default_model();
     default_view();
     default_projection();
 }
@@ -193,9 +177,7 @@ MeshViewerWidget::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
     window_ratio = width/float(height);
-
     arcball->update_window_size(width, height);
-
     update_projection();
     update();
 }
@@ -241,16 +223,13 @@ void
 MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
 {
     QPoint pos = event->pos();
-    arcball->update_window_coord(pos.x(), pos.y());
 
     if( mouse_pressed ){
-        //angle.setX(angle.x() + pos.y() - mouse.y());
-        //angle.setY(angle.y() + pos.x() - mouse.x());
-        //update_view();
-        // std::cerr << mouse.x() << " - " << mouse.y() << std::endl;
+        rotation *= arcball->get_rotation_matrix(
+            pos.x(), pos.y(), mouse.x(), mouse.y()
+        );
 
-        view *= arcball->get_rotation_matrix(view);
-
+        update_view();
         update();
     }
     else
@@ -270,11 +249,15 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
 void
 MeshViewerWidget::mousePressEvent(QMouseEvent* event)
 {
-    if( event->button() == Qt::MouseButton::LeftButton )
+    if( event->button() == Qt::MouseButton::LeftButton ){
         mouse_pressed = true;
+        mouse = event->pos();
+    }
     else
-    if( event->button() == Qt::MouseButton::MiddleButton )
+    if( event->button() == Qt::MouseButton::MiddleButton ){
         wheel_pressed = true;
+        mouse = event->pos();
+    }
 }
 
 void
@@ -337,7 +320,7 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
     switch( event->key() ){
     case Qt::Key_Up :
         position.setZ(position.z()+step);
-        update_view();
+
         break;
 
     case Qt::Key_Down :

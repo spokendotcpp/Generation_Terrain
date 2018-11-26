@@ -38,7 +38,6 @@ private:
     QOpenGLShaderProgram* program;
 
     /* Matrix which compose our Model View Projection Matrix -- uniform values */
-    QMatrix4x4 model;
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
@@ -49,9 +48,8 @@ private:
     bool mouse_pressed;
     bool wheel_pressed;
     QPoint mouse;
-
-    QVector3D angle;
     QVector3D position;
+    QMatrix4x4 rotation;
 
     float fov;
     float zNear;
@@ -104,12 +102,10 @@ public:
 
 /* Private methods */
 private:
-    void default_model();
     void default_view();
     void default_projection();
     void default_ModelViewPosition();
 
-    void update_model();
     void update_view();
     void update_projection();
 

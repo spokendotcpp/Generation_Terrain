@@ -1,45 +1,44 @@
 #include "../include/arcball.h"
+
 #include <cmath>
 #include <QtMath>
+#include <iostream>
 
 ArcBall::ArcBall(int w, int h):
-    window_w(w), window_h(h),
-    last_x(0), last_y(0),
-    curr_x(0), curr_y(0)
-{}
+    window_w(w), window_h(h)
+{
+    update_adjust_size();
+}
 
 ArcBall::~ArcBall()
 {}
 
 QVector3D
-ArcBall::get_screen_coord(int x, int y)
+ArcBall::get_ball_coord(int x, int y)
 {
     QVector3D coord = QVector3D(
-        +(2*x - window_w) / window_w,
-        -(2*y - window_h) / window_h,
+        (x * adjust_w) - 1.0f,
+        1.0f - (y*adjust_h),
         0.0f
     );
 
-    // clamp values
-    if( coord.x() < -1.0f )
-        coord.setX(-1.0f);
-    else
-    if( coord.x() > 1.0f )
-        coord.setX(1.0f);
+    // Pythagoras, compute z length thanks to x & y ones.
+    float squared_len = (coord.x() * coord.x()) + (coord.y() * coord.y());
+    if( squared_len <= 1.0f ) // where 1.0f is the squared sphere radius.
+        coord.setZ(std::sqrt(1.0f - squared_len));
 
-    if( coord.y() < -1.0f )
-        coord.setY(-1.0f);
-    else
-    if( coord.y() > 1.0f )
-        coord.setY(1.0f);
-
-    float squared_len = coord.x() * coord.x() + coord.y() * coord.y();
-    if( squared_len <= 1.0f )
-        coord.setZ(1.0f - squared_len);
+    // If the point is not in ball, get the nearest one.
     else
         coord.normalize();
 
     return coord;
+}
+
+void
+ArcBall::update_adjust_size()
+{
+    adjust_w = 1.0f / ((window_w - 1.0f) * 0.5f);
+    adjust_h = 1.0f / ((window_h - 1.0f) * 0.5f);
 }
 
 void
@@ -49,29 +48,35 @@ ArcBall::update_window_size(int w, int h)
     window_h = h;
 }
 
-void
-ArcBall::update_window_coord(int x, int y)
-{
-    curr_x = x;
-    curr_y = y;
-}
-
+/*
+ * Get the rotation matrix (4x4) between two points.
+ * Where a point is composed of two coordinates x and y (window coordinates).
+ *
+ * "click" position into window (last_x, last_y).
+ * "drag" position into window (curr_x, curr_y).
+ *
+ * Rotation is handled by Quaternion:
+ * one angle (radiants) + one vector (x, y, z).
+ *
+ */
 QMatrix4x4
-ArcBall::get_rotation_matrix(const QMatrix4x4& view)
+ArcBall::get_rotation_matrix(int curr_x, int curr_y, int last_x, int last_y)
 {
+    // Convert window coordinates to ball surfaces coordinates.
+    QVector3D v0 = get_ball_coord(last_x, last_y); // last position
+    QVector3D v1 = get_ball_coord(curr_x, curr_y); // current position
+
+    // Get the angle + the perpendicular vector to v0 & v1:
+    float angle = std::min(1.0f, QVector3D::dotProduct(v0, v1));
+    QVector3D axis = QVector3D::crossProduct(v0, v1);
+
     QMatrix4x4 rotation;
     rotation.setToIdentity();
 
-    QVector3D v0 = get_screen_coord(last_y, last_y); // last position
-    QVector3D v1 = get_screen_coord(curr_x, curr_y); // current position
-
-    float angle = std::acos(std::min(1.0f, QVector3D::dotProduct(v0, v1)));
-
-    QVector3D axis = QVector3D::crossProduct(v0, v1);
-    rotation.rotate(qRadiansToDegrees(angle) * 1.0f, axis);
-
-    last_x = curr_x;
-    last_y = curr_y;
+    // If the axis vector is not to small, rotate
+    if( axis.length() > 1.0e-5f ){
+        rotation.rotate(QQuaternion(angle, axis));
+    }
 
     return rotation;
 }
