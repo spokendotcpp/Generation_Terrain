@@ -16,6 +16,8 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     set_frames_per_second(60);
     lap = Clock::now();
 
+    arcball = nullptr;
+    program = nullptr;
     bunny = nullptr;
     light = nullptr;
     axis = nullptr;
@@ -29,6 +31,11 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 */
 MeshViewerWidget::~MeshViewerWidget()
 {
+    if( arcball == nullptr ){
+        delete arcball;
+        arcball = nullptr;
+    }
+
     if( program != nullptr ){
         program->removeAllShaders();
         delete program;
@@ -138,6 +145,8 @@ MeshViewerWidget::initializeGL()
         return;
     }
 
+    arcball = new ArcBall(size().width(), size().height());
+
     // Create Object(s) :
     axis = new Axis();
     axis->scale(50.0f, 50.0f, 50.0f);
@@ -184,6 +193,9 @@ MeshViewerWidget::resizeGL(int width, int height)
 {
     glViewport(0, 0, width, height);
     window_ratio = width/float(height);
+
+    arcball->update_window_size(width, height);
+
     update_projection();
     update();
 }
@@ -229,11 +241,16 @@ void
 MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
 {
     QPoint pos = event->pos();
+    arcball->update_window_coord(pos.x(), pos.y());
 
     if( mouse_pressed ){
-        angle.setX(angle.x() + pos.y() - mouse.y());
-        angle.setY(angle.y() + pos.x() - mouse.x());
-        update_view();
+        //angle.setX(angle.x() + pos.y() - mouse.y());
+        //angle.setY(angle.y() + pos.x() - mouse.x());
+        //update_view();
+        // std::cerr << mouse.x() << " - " << mouse.y() << std::endl;
+
+        view *= arcball->get_rotation_matrix(view);
+
         update();
     }
     else

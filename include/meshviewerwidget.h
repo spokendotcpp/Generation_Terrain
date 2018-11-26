@@ -22,6 +22,7 @@
 #include "../include/axis.h"
 #include "../include/meshobject.h"
 #include "../include/light.h"
+#include "../include/arcball.h"
 
 typedef std::chrono::steady_clock Clock;
 
@@ -59,6 +60,7 @@ private:
 
     size_t frames;
 
+    ArcBall* arcball;
     MeshObject* bunny;
     Light* light;
     Axis* axis;

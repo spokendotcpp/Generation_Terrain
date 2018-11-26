@@ -26,6 +26,7 @@ find_package(
 )
 
 find_package(OpenGL REQUIRED)
+find_library(OpenMesh REQUIRED)
 
 # CPP SOURCES FILES
 set(SOURCES
@@ -36,6 +37,7 @@ set(SOURCES
     src/axis.cpp
     src/meshobject.cpp
     src/light.cpp
+    src/arcball.cpp
 )
 
 # HEADERS FILES
@@ -46,6 +48,7 @@ set(HEADERS
     include/axis.h
     include/meshobject.h
     include/light.h
+    include/arcball.h
 )
 
 # EXE + LINKING
@@ -57,10 +60,10 @@ add_executable(
 )
 
 # -I
-target_include_directories(
-    ${exe_name} PUBLIC
-    ../lib/OpenMesh.7-1
-)
+#target_include_directories(
+#    ${exe_name} PUBLIC
+#    OpenMesh/lib
+#)
 
 # -l
 target_link_libraries(
