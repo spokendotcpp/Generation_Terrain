@@ -1,23 +1,20 @@
 #include "../include/mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent):
-    QMainWindow(parent), mesh_viewer(new MeshViewerWidget(this))
+    QMainWindow(parent), ui(new Ui::MainWindow())
 {
+    ui->setupUi(this);
+    ui->viewer->set_frames_per_second(144);
+
     this->setWindowTitle("Génération de Terrain");
-    this->setCentralWidget(mesh_viewer);
     this->setMinimumSize(600, 500);
     this->resize(1280, 720);
     this->center();
-
-    mesh_viewer->set_frames_per_second(9999);
 }
 
 MainWindow::~MainWindow()
 {
-    if( mesh_viewer != nullptr ){
-        delete mesh_viewer;
-        mesh_viewer = nullptr;
-    }
+    delete ui;
 }
 
 void
@@ -40,5 +37,5 @@ MainWindow::keyPressEvent(QKeyEvent* event)
     if( event->key() == Qt::Key_Escape )
         close();
     else
-        mesh_viewer->handle_key_events(event);
+        ui->viewer->handle_key_events(event);
 }

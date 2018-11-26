@@ -19,10 +19,10 @@
 
 #include <QMatrix4x4>
 
-#include "../include/axis.h"
-#include "../include/meshobject.h"
-#include "../include/light.h"
-#include "../include/arcball.h"
+#include "axis.h"
+#include "meshobject.h"
+#include "light.h"
+#include "arcball.h"
 
 typedef std::chrono::steady_clock Clock;
 

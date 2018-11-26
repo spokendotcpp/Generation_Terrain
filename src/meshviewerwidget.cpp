@@ -136,7 +136,7 @@ MeshViewerWidget::initializeGL()
     axis->scale(50.0f, 50.0f, 50.0f);
 
     bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
-    bunny->scale(5.0f, 5.0f, 5.0f);
+    // bunny->scale(5.0f, 5.0f, 5.0f);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -154,8 +154,10 @@ MeshViewerWidget::initializeGL()
         axis->update_buffers(program);
 
         bunny->build(program);
-        bunny->use_unique_color(1.0f, 1.0f, 0.0f);
+        bunny->use_unique_color(0.0f, 1.0f, 1.0f);
         bunny->update_buffers(program);
+
+        program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
     }
     program->release();
 
@@ -190,7 +192,7 @@ MeshViewerWidget::paintGL()
 
     if( mcs < frequency ){
         std::this_thread::sleep_for(
-            std::chrono::microseconds(frequency - mcs)
+            std::chrono::microseconds((frequency-100) - mcs)
         );
     }
 
@@ -202,14 +204,24 @@ MeshViewerWidget::paintGL()
         // in case user has modified light pos
         light->to_gpu(program);
 
+        // TODO: DrawableObject method to compute directly transposed(inverted) matrix once.
         program->setUniformValue("projection", projection);
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
+        // draw bunny
         program->setUniformValue("model", bunny->model_matrix());
         program->setUniformValue("model_inverse", bunny->model_matrix().transposed().inverted());
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        program->setUniformValue("wireframe_on", 1);
         bunny->show(GL_TRIANGLES);
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        program->setUniformValue("wireframe_on", 0);
+        bunny->show(GL_TRIANGLES);
+
+        // draw axis
         light->off(program);
         program->setUniformValue("model", axis->model_matrix());
         axis->show(GL_LINES);
@@ -291,7 +303,7 @@ MeshViewerWidget::timerEvent(QTimerEvent* event)
 void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    float step = 5.0f;
+    float step = 0.10f;
     float z = position.z();
 
     /* Wheel go down */

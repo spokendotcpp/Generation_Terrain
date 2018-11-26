@@ -8,13 +8,23 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QScreen>
+#include <QSizePolicy>
 
-#include "../include/meshviewerwidget.h"
+#include <QGridLayout>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGroupBox>
+#include <QMenuBar>
+#include <QPushButton>
+
+#include "meshviewerwidget.h"
+#include "ui_mainwindow.h"
 
 class MainWindow : public QMainWindow
 {
-public:
-    MeshViewerWidget* mesh_viewer;
+private:
+    // MeshViewerWidget* mesh_viewer;
+    Ui::MainWindow* ui;
 
 public:
     MainWindow(QWidget *parent=nullptr);
