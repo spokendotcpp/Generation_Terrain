@@ -424,12 +424,11 @@ MeshViewerWidget::get_obj_from_filesystem()
                new_obj->update_buffers(program);
             }
             program->release();
-
             obj = new_obj;
         }
-        else {
+        else
             std::cerr << "Failed to load mesh file." << std::endl;
-        }
+
         doneCurrent();
     }
 }

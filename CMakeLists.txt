@@ -56,11 +56,12 @@ add_executable(
     collections.qrc
 )
 
-# -I
-#target_include_directories(
-#    ${exe_name} PUBLIC
-#    OpenMesh/lib
-#)
+#-I
+target_include_directories(
+    ${exe_name} PUBLIC
+    OpenMesh-7.1/installed/lib
+    Openmesh-7.1/installed/include
+)
 
 # -l
 target_link_libraries(
