@@ -6,31 +6,60 @@ MainWindow::MainWindow(QWidget *parent):
     ui->setupUi(this);
     ui->viewer->set_frames_per_second(size_t(ui->spin_fps->value()));
 
-    // SIGNALS
+    // SIGNALS & SLOTS powered by C++ Lambda
+    // CAP FPS
     connect(ui->spin_fps, QOverload<int>::of(&QSpinBox::valueChanged),
             [=](int i){ ui->viewer->set_frames_per_second(size_t(i)); });
 
+    // WIREFRAME DISPLAY
     connect(ui->checkBox, QOverload<int>::of(&QCheckBox::stateChanged),
             [=](int i){ ui->viewer->display_wireframe(i); });
 
+    // FILL DISPLAY
     connect(ui->checkBox_2, QOverload<int>::of(&QCheckBox::stateChanged),
             [=](int i){ ui->viewer->display_fill(i); });
 
-    connect(ui->pushButton_3, QOverload<bool>::of(&QPushButton::clicked),
+    // RESET VIEW
+    connect(ui->reset_view, QOverload<bool>::of(&QPushButton::clicked),
             [=](){ ui->viewer->reset_view(); });
 
+    // SCALE MESH
     connect(ui->spin_scale, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             [=](float factor){ ui->viewer->set_scale_factor(factor); });
 
-    connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered),
-            [=](){ ui->viewer->get_obj_from_filesystem(); ui->spin_scale->setValue(1.0); });
+    // LOAD OBJ FILE
+    connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered), [=]()
+    {
+        ui->viewer->get_obj_from_filesystem();
+        ui->spin_scale->setValue(1.0);
+    });
 
+    // Create a lambda function to update light position
+    std::function<void()> update_light_pos = [=](){
+        ui->viewer->set_light_position(
+            ui->lcd_x->intValue(),
+            ui->lcd_y->intValue(),
+            ui->lcd_z->intValue());
+    };
+
+    // LIGHT POSITION
+    connect(ui->light_x, QOverload<int>::of(&QSlider::valueChanged),
+            [=](int value){ ui->lcd_x->display(value); update_light_pos(); });
+
+    connect(ui->light_y, QOverload<int>::of(&QSlider::valueChanged),
+            [=](int value){ ui->lcd_y->display(value); update_light_pos(); });
+
+    connect(ui->light_z, QOverload<int>::of(&QSlider::valueChanged),
+            [=](int value){ ui->lcd_z->display(value); update_light_pos(); });
+
+    // QUIT APP
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
-    //connect(ui->actionLoad_OBJ, &QAction::triggered, ui->viewer, &MeshViewerWidget::get_obj_from_filesystem);
 
     this->setWindowTitle("Génération de Terrain");
     this->resize(1280, 720);
     this->center();
+
+    startTimer(1000);
 }
 
 MainWindow::~MainWindow()
@@ -59,4 +88,12 @@ MainWindow::keyPressEvent(QKeyEvent* event)
         close();
     else
         ui->viewer->handle_key_events(event);
+}
+
+void
+MainWindow::timerEvent(QTimerEvent*)
+{
+    // update FPS "overlay"
+    ui->fps_counter->display(int(ui->viewer->get_computed_frames()));
+    ui->viewer->reset_computed_frames();
 }

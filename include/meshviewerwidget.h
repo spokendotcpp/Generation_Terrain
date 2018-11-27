@@ -61,7 +61,6 @@ private:
     size_t frames;
 
     int timer_id_0;
-    int timer_id_1000;
 
     ArcBall* arcball;
     MeshObject* obj;
@@ -110,15 +109,15 @@ public:
             Clock::time_point t2
     );
 
+    // SLOTS
     /* Load an *.obj file from filesystem */
     void get_obj_from_filesystem();
 
     void display_wireframe(bool on);
     void display_fill(bool on);
-
     void reset_view();
-
     void set_scale_factor(float factor);
+    void set_light_position(int x, int y, int z);
 
 /* Private methods */
 private:

@@ -167,7 +167,6 @@ MeshViewerWidget::initializeGL()
 
     // IDLE Function
     timer_id_0 = startTimer(0);
-    timer_id_1000 = startTimer(1000);
 }
 
 /* When window (this widget) is resized */
@@ -293,11 +292,6 @@ MeshViewerWidget::timerEvent(QTimerEvent* event)
 
     if( id == timer_id_0 ){
         update();
-    }
-    else
-    if( id == timer_id_1000 ){
-        std::cerr << get_computed_frames() << std::endl;
-        reset_computed_frames();
     }
 }
 
@@ -471,5 +465,19 @@ MeshViewerWidget::set_scale_factor(float factor)
         obj->reset_model_matrix();
         obj->scale(factor, factor, factor);
         update();
+    }
+}
+
+void
+MeshViewerWidget::set_light_position(int x, int y, int z)
+{
+    if( light != nullptr ){
+        if( program != nullptr ){
+            makeCurrent();
+            program->bind();
+            light->update_position(float(x), float(y), float(z))->to_gpu(program);
+            program->release();
+            doneCurrent();
+        }
     }
 }
