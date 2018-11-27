@@ -19,6 +19,8 @@
 
 #include <QMatrix4x4>
 
+#include <QFileDialog>
+
 #include "axis.h"
 #include "meshobject.h"
 #include "light.h"
@@ -59,7 +61,7 @@ private:
     size_t frames;
 
     ArcBall* arcball;
-    MeshObject* bunny;
+    MeshObject* obj;
     Light* light;
     Axis* axis;
 
@@ -93,12 +95,17 @@ public:
 
     /* caps frames per second */
     void set_frames_per_second(size_t fps);
+    size_t get_computed_frames() const;
+    void reset_computed_frames();
 
     /* Difference between two high resolution clock time point as microseconds */
     static long microseconds_diff(
             Clock::time_point t1,
             Clock::time_point t2
     );
+
+    /* Load an *.obj file from filesystem */
+    void get_obj_from_filesystem();
 
 /* Private methods */
 private:

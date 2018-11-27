@@ -3,6 +3,7 @@
 #include <future>
 
 #include "../include/meshviewerwidget.h"
+#include "../include/mainwindow.h"
 
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QOpenGLWidget(parent)
@@ -18,7 +19,7 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
 
     arcball = nullptr;
     program = nullptr;
-    bunny = nullptr;
+    obj = nullptr;
     light = nullptr;
     axis = nullptr;
 }
@@ -52,9 +53,9 @@ MeshViewerWidget::~MeshViewerWidget()
         axis = nullptr;
     }
 
-    if( bunny != nullptr ){
-        delete bunny;
-        bunny = nullptr;
+    if( obj != nullptr ){
+        delete obj;
+        obj = nullptr;
     }
 }
 
@@ -135,9 +136,6 @@ MeshViewerWidget::initializeGL()
     axis = new Axis();
     axis->scale(50.0f, 50.0f, 50.0f);
 
-    bunny = new MeshObject("../mesh_files/bunnyLowPoly.obj");
-    // bunny->scale(5.0f, 5.0f, 5.0f);
-
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
     program->addShaderFromSourceFile(QOpenGLShader::Fragment, "../shaders/simple.frag.glsl");
@@ -152,10 +150,6 @@ MeshViewerWidget::initializeGL()
 
         axis->build(program);
         axis->update_buffers(program);
-
-        bunny->build(program);
-        bunny->use_unique_color(0.0f, 1.0f, 1.0f);
-        bunny->update_buffers(program);
 
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
     }
@@ -209,17 +203,19 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
-        // draw bunny
-        program->setUniformValue("model", bunny->model_matrix());
-        program->setUniformValue("model_inverse", bunny->model_matrix().transposed().inverted());
+        // draw obj
+        if( obj != nullptr ){
+            program->setUniformValue("model", obj->model_matrix());
+            program->setUniformValue("model_inverse", obj->model_matrix().transposed().inverted());
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        program->setUniformValue("wireframe_on", 1);
-        bunny->show(GL_TRIANGLES);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            program->setUniformValue("wireframe_on", 1);
+            obj->show(GL_TRIANGLES);
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        program->setUniformValue("wireframe_on", 0);
-        bunny->show(GL_TRIANGLES);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            program->setUniformValue("wireframe_on", 0);
+            obj->show(GL_TRIANGLES);
+        }
 
         // draw axis
         light->off(program);
@@ -237,9 +233,9 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
     QPoint pos = event->pos();
 
     if( mouse_pressed ){
-        rotation *= arcball->get_rotation_matrix(
+        rotation = arcball->get_rotation_matrix(
             pos.x(), pos.y(), mouse.x(), mouse.y()
-        );
+        ) * rotation;
 
         update_view();
         update();
@@ -291,8 +287,8 @@ MeshViewerWidget::timerEvent(QTimerEvent* event)
     if( id == 1 )
         update();
     else {
-        std::cerr << "fps: " << frames << std::endl;
-        frames = 0;
+        std::cerr << get_computed_frames() << std::endl;
+        reset_computed_frames();
     }
 }
 
@@ -379,6 +375,18 @@ MeshViewerWidget::set_frames_per_second(size_t fps)
     frequency = long(1.0f/fps * 1000000);
 }
 
+size_t
+MeshViewerWidget::get_computed_frames() const
+{
+    return frames;
+}
+
+void
+MeshViewerWidget::reset_computed_frames()
+{
+    frames = 0;
+}
+
 void
 MeshViewerWidget::update_lap()
 {
@@ -393,4 +401,35 @@ MeshViewerWidget::microseconds_diff(
         Clock::time_point t2)
 {
     return std::chrono::duration_cast<std::chrono::microseconds>(t1-t2).count();
+}
+
+void
+MeshViewerWidget::get_obj_from_filesystem()
+{
+    QString file = QFileDialog::getOpenFileName(this, "Open mesh object", "../.", "Mesh Files (*.obj)");
+    if( !file.isEmpty() ){
+
+        makeCurrent();
+        MeshObject* new_obj = new MeshObject(file.toStdString());
+        if( new_obj != nullptr ){
+            if( obj != nullptr ){
+                delete obj;
+                obj = nullptr;
+            }
+
+            program->bind();
+            {
+               new_obj->build(program);
+               new_obj->use_unique_color(0.0f, 1.0f, 1.0f);
+               new_obj->update_buffers(program);
+            }
+            program->release();
+
+            obj = new_obj;
+        }
+        else {
+            std::cerr << "Failed to load mesh file." << std::endl;
+        }
+        doneCurrent();
+    }
 }
