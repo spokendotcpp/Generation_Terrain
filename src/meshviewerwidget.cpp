@@ -13,6 +13,9 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     mouse_pressed = false;
     wheel_pressed = false;
 
+    wireframe_on = true;
+    fill_on = true;
+
     frames = 0;
     set_frames_per_second(60);
     lap = Clock::now();
@@ -143,7 +146,7 @@ MeshViewerWidget::initializeGL()
     program->bind();
     {
         light = new Light();
-        light->set_position(0.0f, 50.0f, 100.0f, program->uniformLocation("light_position"))
+        light->set_position(0.0f, 100.0f, 200.0f, program->uniformLocation("light_position"))
              ->set_color(0.6f, 0.6f, 0.6f, program->uniformLocation("light_color"))
              ->set_ambient(0.4f, program->uniformLocation("light_ambient"))
              ->enable(program->uniformLocation("light_on"));
@@ -208,13 +211,16 @@ MeshViewerWidget::paintGL()
             program->setUniformValue("model", obj->model_matrix());
             program->setUniformValue("model_inverse", obj->model_matrix().transposed().inverted());
 
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            program->setUniformValue("wireframe_on", 1);
-            obj->show(GL_TRIANGLES);
+            if( wireframe_on ){
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                program->setUniformValue("wireframe_on", 1);
+                obj->show(GL_TRIANGLES);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                program->setUniformValue("wireframe_on", 0);
+            }
 
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            program->setUniformValue("wireframe_on", 0);
-            obj->show(GL_TRIANGLES);
+            if( fill_on )
+                obj->show(GL_TRIANGLES);
         }
 
         // draw axis
@@ -328,7 +334,7 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
     switch( event->key() ){
     case Qt::Key_Up :
         position.setZ(position.z()+step);
-
+        update_view();
         break;
 
     case Qt::Key_Down :
@@ -430,5 +436,37 @@ MeshViewerWidget::get_obj_from_filesystem()
             std::cerr << "Failed to load mesh file." << std::endl;
 
         doneCurrent();
+    }
+}
+
+void
+MeshViewerWidget::display_wireframe(bool mode)
+{
+    wireframe_on = mode;
+    update();
+}
+
+void
+MeshViewerWidget::display_fill(bool mode)
+{
+    fill_on = mode;
+    update();
+}
+
+void
+MeshViewerWidget::reset_view()
+{
+    default_view();
+    update_view();
+    update();
+}
+
+void
+MeshViewerWidget::set_scale_factor(float factor)
+{
+    if( obj != nullptr ){
+        obj->reset_model_matrix();
+        obj->scale(factor, factor, factor);
+        update();
     }
 }

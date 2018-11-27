@@ -8,11 +8,25 @@ MainWindow::MainWindow(QWidget *parent):
 
     // SIGNALS
     connect(ui->spin_fps, QOverload<int>::of(&QSpinBox::valueChanged),
-            [=](int i){ ui->viewer->set_frames_per_second(size_t(i)); }
-    );
+            [=](int i){ ui->viewer->set_frames_per_second(size_t(i)); });
+
+    connect(ui->checkBox, QOverload<int>::of(&QCheckBox::stateChanged),
+            [=](int i){ ui->viewer->display_wireframe(i); });
+
+    connect(ui->checkBox_2, QOverload<int>::of(&QCheckBox::stateChanged),
+            [=](int i){ ui->viewer->display_fill(i); });
+
+    connect(ui->pushButton_3, QOverload<bool>::of(&QPushButton::clicked),
+            [=](){ ui->viewer->reset_view(); });
+
+    connect(ui->spin_scale, QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            [=](float factor){ ui->viewer->set_scale_factor(factor); });
+
+    connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered),
+            [=](){ ui->viewer->get_obj_from_filesystem(); ui->spin_scale->setValue(1.0); });
 
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
-    connect(ui->actionLoad_OBJ, &QAction::triggered, ui->viewer, &MeshViewerWidget::get_obj_from_filesystem);
+    //connect(ui->actionLoad_OBJ, &QAction::triggered, ui->viewer, &MeshViewerWidget::get_obj_from_filesystem);
 
     this->setWindowTitle("Génération de Terrain");
     this->resize(1280, 720);

@@ -23,7 +23,6 @@ find_package(
 )
 
 find_package(OpenGL REQUIRED)
-find_library(OpenMesh REQUIRED)
 
 # CPP SOURCES FILES
 set(SOURCES
@@ -48,11 +47,16 @@ set(HEADERS
     include/arcball.h
 )
 
+set(UI_FORMS
+    include/mainwindow.ui
+)
+
 # EXE + LINKING
 add_executable(
     ${exe_name}
     ${SOURCES}
     ${HEADERS}
+    ${UI_FORMS}
     collections.qrc
 )
 
@@ -62,6 +66,8 @@ target_include_directories(
     OpenMesh-7.1/installed/lib
     Openmesh-7.1/installed/include
 )
+
+#find_package(OpenMesh REQUIRED)
 
 # -l
 target_link_libraries(

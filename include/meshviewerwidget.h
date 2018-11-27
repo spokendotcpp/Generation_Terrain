@@ -65,6 +65,9 @@ private:
     Light* light;
     Axis* axis;
 
+    bool wireframe_on;
+    bool fill_on;
+
 /* Public methods */
 public:
     MeshViewerWidget(QWidget *parent=nullptr);
@@ -106,6 +109,13 @@ public:
 
     /* Load an *.obj file from filesystem */
     void get_obj_from_filesystem();
+
+    void display_wireframe(bool on);
+    void display_fill(bool on);
+
+    void reset_view();
+
+    void set_scale_factor(float factor);
 
 /* Private methods */
 private:
