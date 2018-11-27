@@ -24,6 +24,17 @@ find_package(
 
 find_package(OpenGL REQUIRED)
 
+# FIND OPENMESH LIBRARIES
+find_library(OPENMESH_CORE
+    NAMES OpenMeshCore
+    PATHS OpenMesh-7.1/lib
+)
+
+find_library(OPENMESH_TOOLS
+    NAMES OpenMeshTools
+    PATHS OpenMesh-7.1/lib
+)
+
 # CPP SOURCES FILES
 set(SOURCES
     src/main.cpp
@@ -60,14 +71,12 @@ add_executable(
     collections.qrc
 )
 
-#-I
+# -I
 target_include_directories(
     ${exe_name} PUBLIC
-    OpenMesh-7.1/installed/lib
-    Openmesh-7.1/installed/include
+    # OPENMESH HEADERS (.hh)
+    OpenMesh-7.1/include
 )
-
-#find_package(OpenMesh REQUIRED)
 
 # -l
 target_link_libraries(
@@ -80,6 +89,6 @@ target_link_libraries(
 
     ${OPENGL_LIBRARIES}
 
-    OpenMeshCore
-    OpenMeshTools
+    ${OPENMESH_CORE}
+    ${OPENMESH_TOOLS}
 )

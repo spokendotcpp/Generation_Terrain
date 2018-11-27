@@ -60,6 +60,9 @@ private:
 
     size_t frames;
 
+    int timer_id_0;
+    int timer_id_1000;
+
     ArcBall* arcball;
     MeshObject* obj;
     Light* light;

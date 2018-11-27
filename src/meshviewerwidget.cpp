@@ -166,8 +166,8 @@ MeshViewerWidget::initializeGL()
     default_ModelViewPosition();
 
     // IDLE Function
-    startTimer(0);
-    startTimer(1000);
+    timer_id_0 = startTimer(0);
+    timer_id_1000 = startTimer(1000);
 }
 
 /* When window (this widget) is resized */
@@ -239,6 +239,7 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
     QPoint pos = event->pos();
 
     if( mouse_pressed ){
+        // The new rotation equals arcball rotation * the last rotation.
         rotation = arcball->get_rotation_matrix(
             pos.x(), pos.y(), mouse.x(), mouse.y()
         ) * rotation;
@@ -290,9 +291,11 @@ MeshViewerWidget::timerEvent(QTimerEvent* event)
 {
     int id = event->timerId();
 
-    if( id == 1 )
+    if( id == timer_id_0 ){
         update();
-    else {
+    }
+    else
+    if( id == timer_id_1000 ){
         std::cerr << get_computed_frames() << std::endl;
         reset_computed_frames();
     }
@@ -329,7 +332,7 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
 void
 MeshViewerWidget::handle_key_events(QKeyEvent* event)
 {
-    float step = 5.0f;
+    float step = 0.5f;
 
     switch( event->key() ){
     case Qt::Key_Up :
