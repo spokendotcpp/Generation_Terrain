@@ -118,6 +118,7 @@ public:
     void reset_view();
     void set_scale_factor(float factor);
     void set_light_position(int x, int y, int z);
+    QString status_message();
 
 /* Private methods */
 private:

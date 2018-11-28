@@ -2,8 +2,13 @@
 
 #include <iostream>
 
-MeshObject::MeshObject(const std::string& filename)
-    :DrawableObject()
+MeshObject::MeshObject(const std::string& _filename):
+    DrawableObject(),
+    filename(_filename),
+    _nb_faces(0),
+    _nb_vertices(0),
+    _mean_vertices_valence(0),
+    _mean_angles_dihedral(0)
 {
     mesh.request_face_normals();
     mesh.request_vertex_normals();
@@ -21,6 +26,12 @@ MeshObject::MeshObject(const std::string& filename)
         mesh.update_vertex_normals();
         std::cerr << "DONE" << std::endl;
     }
+
+    _nb_faces = mesh.n_faces();
+    _nb_vertices = mesh.n_vertices();
+
+    compute_mean_dihedral_angles();
+    compute_mean_valence_vertices();
 }
 
 MeshObject::~MeshObject()
@@ -29,6 +40,59 @@ MeshObject::~MeshObject()
     mesh.release_face_normals();
     mesh.release_vertex_colors();
 }
+
+void
+MeshObject::compute_mean_valence_vertices()
+{
+    _mean_vertices_valence = 0.0;
+
+    for(const auto& v_it: mesh.vertices())
+        _mean_vertices_valence += double(mesh.valence(v_it));
+
+    _mean_vertices_valence /= double(_nb_vertices);
+}
+
+void
+MeshObject::compute_mean_dihedral_angles()
+{
+    _mean_angles_dihedral = 0.0;
+
+    for(const auto& e_it: mesh.edges())
+        _mean_angles_dihedral += double(mesh.calc_dihedral_angle(e_it));
+
+    _mean_angles_dihedral/= double(mesh.n_edges());
+}
+
+const std::string&
+MeshObject::get_filename() const
+{
+    return filename;
+}
+
+const size_t&
+MeshObject::nb_faces() const
+{
+    return _nb_faces;
+}
+
+const size_t&
+MeshObject::nb_vertices() const
+{
+    return _nb_vertices;
+}
+
+const double&
+MeshObject::mean_vertices_valence() const
+{
+    return _mean_vertices_valence;
+}
+
+const double&
+MeshObject::mean_angles_dihedral() const
+{
+    return _mean_angles_dihedral;
+}
+
 
 bool
 MeshObject::build(QOpenGLShaderProgram* program)

@@ -248,10 +248,10 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
     }
     else
     if( wheel_pressed ){
-        float step = 0.5f;
+        float step = position.z() / (zFar - zNear);
 
-        position.setX(position.x() + ((pos.x() - mouse.x())*step));
-        position.setY(position.y() - ((pos.y() - mouse.y())*step));
+        position.setX(position.x() - ((pos.x() - mouse.x())*step));
+        position.setY(position.y() + ((pos.y() - mouse.y())*step));
 
         update_view();
         update();
@@ -302,8 +302,8 @@ MeshViewerWidget::timerEvent(QTimerEvent* event)
 void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
-    float step = 0.10f;
     float z = position.z();
+    float step = 0.5f;
 
     /* Wheel go down */
     if( event->delta() < 0 ){
@@ -480,4 +480,23 @@ MeshViewerWidget::set_light_position(int x, int y, int z)
             doneCurrent();
         }
     }
+}
+
+QString
+MeshViewerWidget::status_message()
+{
+    QString msg;
+    if( obj != nullptr ){
+        msg.append("Filename: ");
+        msg.append(QString::fromStdString(obj->get_filename()));
+        msg.append(" | vertices(");
+        msg.append(QString::number(obj->nb_vertices()));
+        msg.append(") | faces(");
+        msg.append(QString::number(obj->nb_faces()));
+        msg.append(") | Mean vertices valence : ");
+        msg.append(QString::number(obj->mean_vertices_valence()));
+        msg.append(" | Mean angles dihedral : ");
+        msg.append(QString::number(obj->mean_angles_dihedral()));
+    }
+    return msg;
 }

@@ -4,7 +4,7 @@ MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow())
 {
     ui->setupUi(this);
-    ui->viewer->set_frames_per_second(size_t(ui->spin_fps->value()));
+    ui->viewer->set_frames_per_second(60);
 
     // SIGNALS & SLOTS powered by C++ Lambda
     // CAP FPS
@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent):
     connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered), [=]()
     {
         ui->viewer->get_obj_from_filesystem();
+        ui->statusbar->showMessage(ui->viewer->status_message());
         ui->spin_scale->setValue(1.0);
     });
 
@@ -55,7 +56,7 @@ MainWindow::MainWindow(QWidget *parent):
     // QUIT APP
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
 
-    this->setWindowTitle("Génération de Terrain");
+    this->setWindowTitle("PGAI");
     this->resize(1280, 720);
     this->center();
 

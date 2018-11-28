@@ -13,6 +13,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic-errors")
 
+set(OpenGL_GL_PREFERENCE "LEGACY")
+
 # PACKAGES REQUIRED
 find_package(
     Qt5 REQUIRED COMPONENTS
