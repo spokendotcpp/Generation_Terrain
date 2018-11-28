@@ -111,7 +111,7 @@ public:
 
     // SLOTS
     /* Load an *.obj file from filesystem */
-    void get_obj_from_filesystem();
+    void get_obj_from_filesystem(const std::string& filename);
 
     void display_wireframe(bool on);
     void display_fill(bool on);

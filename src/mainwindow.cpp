@@ -30,9 +30,12 @@ MainWindow::MainWindow(QWidget *parent):
     // LOAD OBJ FILE
     connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered), [=]()
     {
-        ui->viewer->get_obj_from_filesystem();
-        ui->statusbar->showMessage(ui->viewer->status_message());
-        ui->spin_scale->setValue(1.0);
+        QString file = QFileDialog::getOpenFileName(this, "Open mesh object", "../.", "Mesh Files (*.obj)");
+        if( !file.isEmpty() ){
+            ui->viewer->get_obj_from_filesystem(file.toStdString());
+            ui->statusbar->showMessage(ui->viewer->status_message());
+            ui->spin_scale->setValue(1.0);
+        }
     });
 
     // Create a lambda function to update light position

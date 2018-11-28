@@ -407,33 +407,29 @@ MeshViewerWidget::microseconds_diff(
 }
 
 void
-MeshViewerWidget::get_obj_from_filesystem()
+MeshViewerWidget::get_obj_from_filesystem(const std::string& filename)
 {
-    QString file = QFileDialog::getOpenFileName(this, "Open mesh object", "../.", "Mesh Files (*.obj)");
-    if( !file.isEmpty() ){
-
-        makeCurrent();
-        MeshObject* new_obj = new MeshObject(file.toStdString());
-        if( new_obj != nullptr ){
-            if( obj != nullptr ){
-                delete obj;
-                obj = nullptr;
-            }
-
-            program->bind();
-            {
-               new_obj->build(program);
-               new_obj->use_unique_color(0.0f, 1.0f, 1.0f);
-               new_obj->update_buffers(program);
-            }
-            program->release();
-            obj = new_obj;
+    makeCurrent();
+    MeshObject* new_obj = new MeshObject(filename);
+    if( new_obj != nullptr ){
+        if( obj != nullptr ){
+            delete obj;
+            obj = nullptr;
         }
-        else
-            std::cerr << "Failed to load mesh file." << std::endl;
 
-        doneCurrent();
+        program->bind();
+        {
+           new_obj->build(program);
+           new_obj->use_unique_color(0.0f, 1.0f, 1.0f);
+           new_obj->update_buffers(program);
+        }
+        program->release();
+        obj = new_obj;
     }
+    else
+        std::cerr << "Failed to load mesh file." << std::endl;
+
+    doneCurrent();
 }
 
 void
