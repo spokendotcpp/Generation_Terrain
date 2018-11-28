@@ -46,6 +46,7 @@ ArcBall::update_window_size(int w, int h)
 {
     window_w = w;
     window_h = h;
+    update_adjust_size();
 }
 
 /*

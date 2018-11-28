@@ -69,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent):
     this->resize(1280, 720);
     this->center();
 
+    // start a Callback timer of (1s, 1000ms)
     startTimer(1000);
 }
 
