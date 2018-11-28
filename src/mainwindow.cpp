@@ -1,5 +1,7 @@
 #include "../include/mainwindow.h"
 
+#include <QMessageBox>
+
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow())
 {
@@ -30,7 +32,11 @@ MainWindow::MainWindow(QWidget *parent):
     // LOAD OBJ FILE
     connect(ui->actionLoad_OBJ, QOverload<bool>::of(&QAction::triggered), [=]()
     {
-        QString file = QFileDialog::getOpenFileName(this, "Open mesh object", "../.", "Mesh Files (*.obj)");
+        QString file = QFileDialog::getOpenFileName(
+            this, "Open mesh object", "..", "Mesh Files (*.obj)",
+            nullptr, QFileDialog::DontUseNativeDialog
+        );
+
         if( !file.isEmpty() ){
             ui->viewer->get_obj_from_filesystem(file.toStdString());
             ui->statusbar->showMessage(ui->viewer->status_message());

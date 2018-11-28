@@ -31,6 +31,7 @@ public:
     void center();
     void keyPressEvent(QKeyEvent*) override;
     void timerEvent(QTimerEvent* event) override;
+
 };
 
 #endif // MAINWINDOW_H
