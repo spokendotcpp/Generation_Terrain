@@ -1,6 +1,8 @@
 #include "../include/meshobject.h"
 
 #include <iostream>
+#include <QtMath>
+#include <cmath>
 
 MeshObject::MeshObject(const std::string& _filename):
     DrawableObject(),
@@ -14,24 +16,23 @@ MeshObject::MeshObject(const std::string& _filename):
     mesh.request_vertex_normals();
     mesh.request_vertex_colors();
 
-    OpenMesh::IO::Options opt;
-    opt.set( OpenMesh::IO::Options::VertexNormal );
+    if( OpenMesh::IO::read_mesh(mesh, filename) ){
+        _nb_faces = mesh.n_faces();
+        _nb_vertices = mesh.n_vertices();
 
-    OpenMesh::IO::read_mesh(mesh, filename, opt);
+        compute_mean_dihedral_angles();
+        compute_mean_valence_vertices();
 
-    if( !opt.check(OpenMesh::IO::Options::VertexNormal) ){
-        std::cerr << "Vertex normal property was not found into " << filename << std::endl;
-        std::cerr << "Calculating vertex normals ... ";
+        Laplace_Beltrami_operator();
+
+        std::cout << "Calculating vertex normals ... ";
         mesh.update_face_normals();
         mesh.update_vertex_normals();
-        std::cerr << "DONE" << std::endl;
+        std::cout << "DONE" << std::endl;
     }
-
-    _nb_faces = mesh.n_faces();
-    _nb_vertices = mesh.n_vertices();
-
-    compute_mean_dihedral_angles();
-    compute_mean_valence_vertices();
+    else {
+        std::cerr << "Failed to read " << filename << " file" << std::endl;
+    }
 }
 
 MeshObject::~MeshObject()
@@ -139,3 +140,100 @@ MeshObject::build(QOpenGLShaderProgram* program)
 
     return initialize(nb_vertices, nb_elements, 3);
 }
+
+float distance(MyMesh::Point p1, MyMesh::Point p2)
+{
+    return std::sqrt(
+        std::pow(p2[0]-p1[0], 2.0f)+
+        std::pow(p2[1]-p1[1], 2.0f)+
+        std::pow(p2[2]-p1[2], 2.0f));
+}
+
+void
+MeshObject::Laplace_Beltrami_operator()
+{
+    MyMesh::ConstVertexVertexCCWIter cvv_ccwit;
+    MyMesh::Point vi_left, vi_right, vi, v;
+
+    float area;
+    float alpha;
+    float beta;
+
+    float* deltas = new float[mesh.n_vertices()];
+    size_t i=0;
+
+    // For all vertices
+    for(auto& v_it: mesh.vertices()){
+        /* Const Vertex Vertex Counter-Clock Wise Iterator */
+        cvv_ccwit = mesh.cvv_ccwiter(v_it);
+        v = mesh.point(v_it);
+
+        size_t n = 0;
+        float sum = 0.0f;
+        area = 0.0f;
+
+        // First ring neighbors
+        while( cvv_ccwit != mesh.cvv_ccwend(v_it) ){
+            vi_left = mesh.point(*cvv_ccwit);
+            vi = mesh.point(*(++cvv_ccwit));
+            vi_right = mesh.point(*(++cvv_ccwit));
+
+            MyMesh::Point side_vi_left1 = (vi_left - vi).normalize();
+            MyMesh::Point side_vi_left2 = (vi_left - v).normalize();
+
+            MyMesh::Point side_vi_right1 = (vi_right - vi).normalize();
+            MyMesh::Point side_vi_right2 = (vi_right - v).normalize();
+
+            float vi_minus_v = distance(vi, v);
+
+            // compute Alpha & Beta angles
+            // angle = dot_product / product of norms
+            alpha = std::acos(
+                  ( side_vi_left1|side_vi_left2 )
+                / ( side_vi_left1.norm()*side_vi_left2.norm() )
+            );
+
+            beta = std::acos(
+                  ( side_vi_right1|side_vi_right2 )
+                / ( side_vi_right1.norm()*side_vi_right2.norm() )
+            );
+
+            float alpha_degree = qRadiansToDegrees(alpha);
+            float beta_degree = qRadiansToDegrees(beta);
+
+            float cot_alpha = std::cos(alpha_degree)/std::sin(alpha_degree);
+            float cot_beta = std::cos(beta_degree)/std::sin(beta_degree);
+
+            float sum_cot = cot_alpha + cot_beta;
+
+            sum += (sum_cot * vi_minus_v);
+
+            MyMesh::Point barycenter_l = (vi_left + vi + v) / 3;
+            MyMesh::Point barycenter_r = (vi_right + vi + v) / 3;
+
+            float a = distance(v, barycenter_l);
+            float b = distance(v, barycenter_r);
+            float c = distance(barycenter_l, barycenter_r);
+            float p = (a+b+c)/2.0f;
+
+            area += std::sqrt(p*(p-a)*(p-b)*(p-c));
+
+            // Since we `++` two times, we want to fallback once for the next iteration.
+            --cvv_ccwit;
+            ++n;
+        }
+
+        deltas[i++] = 0.5f*area * sum;
+
+        //mesh.point(v_it) = MyMesh::Point(v[0]+delta, v[1]+delta, v[2]+delta);
+    }
+
+    i = 0;
+    for(auto& v: mesh.vertices())
+    {
+        MyMesh::Point p = mesh.point(v);
+        mesh.point(v) = MyMesh::Point(p[0]+deltas[i], p[1]+deltas[i], p[2]+deltas[i]);
+        i++;
+    }
+}
+

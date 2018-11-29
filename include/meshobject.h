@@ -18,6 +18,7 @@ private:
 
     void compute_mean_valence_vertices();
     void compute_mean_dihedral_angles();
+    void Laplace_Beltrami_operator();
 
 public:
     MeshObject(const std::string&);
