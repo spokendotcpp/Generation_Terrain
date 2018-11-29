@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <QtMath>
-#include <cmath>
 
 MeshObject::MeshObject(const std::string& _filename):
     DrawableObject(),
@@ -23,11 +22,8 @@ MeshObject::MeshObject(const std::string& _filename):
         compute_mean_dihedral_angles();
         compute_mean_valence_vertices();
 
-        Laplace_Beltrami_operator();
-
         std::cout << "Calculating vertex normals ... ";
-        mesh.update_face_normals();
-        mesh.update_vertex_normals();
+        update_normals();
         std::cout << "DONE" << std::endl;
     }
     else {
@@ -141,7 +137,9 @@ MeshObject::build(QOpenGLShaderProgram* program)
     return initialize(nb_vertices, nb_elements, 3);
 }
 
-float distance(MyMesh::Point p1, MyMesh::Point p2)
+// https://fr.wikipedia.org/wiki/Distance_entre_deux_points_sur_le_plan_cart%C3%A9sien
+float
+MeshObject::distance(MyMesh::Point p1, MyMesh::Point p2)
 {
     return std::sqrt(
         std::pow(p2[0]-p1[0], 2.0f)+
@@ -150,7 +148,7 @@ float distance(MyMesh::Point p1, MyMesh::Point p2)
 }
 
 void
-MeshObject::Laplace_Beltrami_operator()
+MeshObject::Laplace_Beltrami_operator(float h, float lambda)
 {
     MyMesh::ConstVertexVertexCCWIter cvv_ccwit;
     MyMesh::Point vi_left, vi_right, vi, v;
@@ -159,8 +157,9 @@ MeshObject::Laplace_Beltrami_operator()
     float alpha;
     float beta;
 
-    float* deltas = new float[mesh.n_vertices()];
-    size_t i=0;
+    float sum_cot;
+    size_t i = 0;
+    MyMesh::Point* deltas = new MyMesh::Point[mesh.n_vertices()];
 
     // For all vertices
     for(auto& v_it: mesh.vertices()){
@@ -168,9 +167,8 @@ MeshObject::Laplace_Beltrami_operator()
         cvv_ccwit = mesh.cvv_ccwiter(v_it);
         v = mesh.point(v_it);
 
-        size_t n = 0;
-        float sum = 0.0f;
         area = 0.0f;
+        deltas[i] = MyMesh::Point(0.0f, 0.0f, 0.0f);
 
         // First ring neighbors
         while( cvv_ccwit != mesh.cvv_ccwend(v_it) ){
@@ -178,38 +176,39 @@ MeshObject::Laplace_Beltrami_operator()
             vi = mesh.point(*(++cvv_ccwit));
             vi_right = mesh.point(*(++cvv_ccwit));
 
-            MyMesh::Point side_vi_left1 = (vi_left - vi).normalize();
-            MyMesh::Point side_vi_left2 = (vi_left - v).normalize();
+            MyMesh::Point v0_alpha = (vi_left - vi);
+            MyMesh::Point v1_alpha = (vi_left - v);
 
-            MyMesh::Point side_vi_right1 = (vi_right - vi).normalize();
-            MyMesh::Point side_vi_right2 = (vi_right - v).normalize();
+            MyMesh::Point v0_beta = (vi_right - vi);
+            MyMesh::Point v1_beta = (vi_right - v);
 
-            float vi_minus_v = distance(vi, v);
+            MyMesh::Point vi_minus_v = (vi - v);
 
             // compute Alpha & Beta angles
-            // angle = dot_product / product of norms
+            // angle = acos( dot_product / product of norms )
             alpha = std::acos(
-                  ( side_vi_left1|side_vi_left2 )
-                / ( side_vi_left1.norm()*side_vi_left2.norm() )
+                  ( v0_alpha|v1_alpha )
+                / ( v0_alpha.norm()*v1_alpha.norm() )
             );
 
             beta = std::acos(
-                  ( side_vi_right1|side_vi_right2 )
-                / ( side_vi_right1.norm()*side_vi_right2.norm() )
+                  ( v0_beta|v1_beta )
+                / ( v0_beta.norm()*v1_beta.norm() )
             );
 
-            float alpha_degree = qRadiansToDegrees(alpha);
-            float beta_degree = qRadiansToDegrees(beta);
+            // Cotangente
+            // https://fr.wikipedia.org/wiki/Cotangente
+            float cot_alpha = std::cos(alpha)/std::sin(alpha);
+            float cot_beta = std::cos(beta)/std::sin(beta);
 
-            float cot_alpha = std::cos(alpha_degree)/std::sin(alpha_degree);
-            float cot_beta = std::cos(beta_degree)/std::sin(beta_degree);
+            // Sum part
+            sum_cot = (cot_alpha + cot_beta);
+            deltas[i] += (sum_cot * vi_minus_v);
 
-            float sum_cot = cot_alpha + cot_beta;
-
-            sum += (sum_cot * vi_minus_v);
-
-            MyMesh::Point barycenter_l = (vi_left + vi + v) / 3;
-            MyMesh::Point barycenter_r = (vi_right + vi + v) / 3;
+            // Compute area
+            // https://fr.wikipedia.org/wiki/Aire_d%27un_triangle
+            MyMesh::Point barycenter_l = ((vi_left + vi + v) / 3.0f);
+            MyMesh::Point barycenter_r = ((vi_right + vi + v) / 3.0f);
 
             float a = distance(v, barycenter_l);
             float b = distance(v, barycenter_r);
@@ -220,20 +219,25 @@ MeshObject::Laplace_Beltrami_operator()
 
             // Since we `++` two times, we want to fallback once for the next iteration.
             --cvv_ccwit;
-            ++n;
         }
 
-        deltas[i++] = 0.5f*area * sum;
-
-        //mesh.point(v_it) = MyMesh::Point(v[0]+delta, v[1]+delta, v[2]+delta);
+        // Final compute, where deltas[i] holds all the sum part
+        deltas[i] = 0.5f*area * deltas[i]; // 1/2 * Area * [Sum]
+        ++i;
     }
 
+    // Applies deltas to mesh vertices
     i = 0;
     for(auto& v: mesh.vertices())
-    {
-        MyMesh::Point p = mesh.point(v);
-        mesh.point(v) = MyMesh::Point(p[0]+deltas[i], p[1]+deltas[i], p[2]+deltas[i]);
-        i++;
-    }
+        mesh.point(v) += (h * lambda * deltas[i++]);
+
+    delete [] deltas;
+    deltas = nullptr;
 }
 
+void
+MeshObject::update_normals()
+{
+    mesh.update_face_normals();
+    mesh.update_vertex_normals();
+}

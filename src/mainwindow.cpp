@@ -1,6 +1,7 @@
 #include "../include/mainwindow.h"
 
 #include <QMessageBox>
+#include <QFileDialog>
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow())
@@ -41,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent):
             ui->viewer->get_obj_from_filesystem(file.toStdString());
             ui->statusbar->showMessage(ui->viewer->status_message());
             ui->spin_scale->setValue(1.0);
+            ui->actionLaplace_Beltrami->setEnabled(true);
         }
     });
 
@@ -61,6 +63,13 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect(ui->light_z, QOverload<int>::of(&QSlider::valueChanged),
             [=](int value){ ui->lcd_z->display(value); update_light_pos(); });
+
+    // FILTERS
+    // LAPLACE-BELTRAMI
+    connect(ui->actionLaplace_Beltrami, QOverload<bool>::of(&QAction::triggered), [=]()
+    {
+        ui->viewer->apply_Laplace_Beltrami();
+    });
 
     // QUIT APP
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);

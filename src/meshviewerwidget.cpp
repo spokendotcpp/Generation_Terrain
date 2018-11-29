@@ -496,3 +496,26 @@ MeshViewerWidget::status_message()
     }
     return msg;
 }
+
+void
+MeshViewerWidget::apply_Laplace_Beltrami()
+{
+    int r = QInputDialog::getInt(this, "Laplace-Beltrami", "number of iterations:", 10);
+    if( r < 0 )
+        r = 0;
+
+    for(int i=0; i < r; ++i){
+        obj->Laplace_Beltrami_operator(100.0f, 0.9f);
+    }
+
+    obj->update_normals();
+
+    MeshObject tmp(*obj);
+
+    makeCurrent();
+    obj->build(program);
+    tmp.copy_colors_to(obj);
+    obj->update_buffers(program);
+
+    doneCurrent();
+}

@@ -18,8 +18,7 @@
 #include <QOpenGLShaderProgram>
 
 #include <QMatrix4x4>
-
-#include <QFileDialog>
+#include <QInputDialog>
 
 #include "axis.h"
 #include "meshobject.h"
@@ -109,6 +108,8 @@ public:
             Clock::time_point t2
     );
 
+    inline MeshObject* get_mesh(){ return obj; }
+
     // SLOTS
     /* Load an *.obj file from filesystem */
     void get_obj_from_filesystem(const std::string& filename);
@@ -119,6 +120,7 @@ public:
     void set_scale_factor(float factor);
     void set_light_position(int x, int y, int z);
     QString status_message();
+    void apply_Laplace_Beltrami();
 
 /* Private methods */
 private:

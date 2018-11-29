@@ -18,7 +18,6 @@ private:
 
     void compute_mean_valence_vertices();
     void compute_mean_dihedral_angles();
-    void Laplace_Beltrami_operator();
 
 public:
     MeshObject(const std::string&);
@@ -29,6 +28,11 @@ public:
     const size_t& nb_vertices() const;
     const double& mean_vertices_valence() const;
     const double& mean_angles_dihedral() const;
+
+    void Laplace_Beltrami_operator(float h, float lambda);
+    void update_normals();
+
+    static float distance(MyMesh::Point p1, MyMesh::Point p2);
 
     bool build(QOpenGLShaderProgram* program) override;
 };

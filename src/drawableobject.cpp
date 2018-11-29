@@ -256,6 +256,7 @@ DrawableObject::set_vertices_geometry(int shader_location, GLfloat* coordinates,
         ++properties;
 
     location_vertices_coordinates = shader_location;
+    free_vertices_geometry();
     raw_vertices_coordinates = coordinates;
     raw_vertices_indices = indices;
 }
@@ -271,10 +272,8 @@ DrawableObject::set_vertices_colors(int shader_location, GLfloat* colors)
     else
         ++properties;
 
-    if( colors == nullptr )
-        std::cerr << "NULL" << std::endl;
-
     location_vertices_colors = shader_location;
+    free_vertices_colors();
     raw_vertices_colors = colors;
 }
 
@@ -290,6 +289,8 @@ DrawableObject::set_vertices_normals(int shader_location, GLfloat* normals)
         ++properties;
 
     location_vertices_normals = shader_location;
+
+    free_vertices_normals();
     raw_vertices_normals = normals;
 }
 
@@ -308,8 +309,6 @@ DrawableObject::free_vertices_geometry()
 
     nb_vertices = 0;
     nb_elements = 0;
-    tuple_size = 0;
-    initialized = false;
 }
 
 void

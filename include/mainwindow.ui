@@ -385,7 +385,14 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuProcess">
+    <property name="title">
+     <string>P&amp;rocess</string>
+    </property>
+    <addaction name="actionLaplace_Beltrami"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuProcess"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionLoad_OBJ">
@@ -396,6 +403,14 @@
   <action name="actionExit">
    <property name="text">
     <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="actionLaplace_Beltrami">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Laplace-Beltrami</string>
    </property>
   </action>
  </widget>
