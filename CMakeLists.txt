@@ -32,18 +32,18 @@ find_package(OpenGL REQUIRED)
 # FIND OPENMESH LIBRARIES
 find_library(OPENMESH_CORE
     NAMES OpenMeshCore
-    PATHS lib/OpenMesh-7.1/lib
+    PATHS libs/OpenMesh-7.1/lib
 )
 
 find_library(OPENMESH_TOOLS
     NAMES OpenMeshTools
-    PATHS lib/OpenMesh-7.1/lib
+    PATHS libs/OpenMesh-7.1/lib
 )
 
 # FIND QWT LIBRARY
 find_library(QWT
     NAMES qwt
-    PATHS lib/qwt-6.1.3/lib
+    PATHS libs/qwt-6.1.3/lib
 )
 
 # CPP SOURCES FILES
@@ -86,10 +86,10 @@ add_executable(
 target_include_directories(
     ${exe_name} PUBLIC
     # OPENMESH HEADERS (.hh)
-    lib/OpenMesh-7.1/include
+    libs/OpenMesh-7.1/include
 
     # QWT HEADERS
-    lib/qwt-6.1.3/include
+    libs/qwt-6.1.3/include
 )
 
 # -l

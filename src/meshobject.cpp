@@ -58,12 +58,12 @@ MeshObject::normalize()
 {
     float min_x, min_y, min_z;
     float max_x, max_y, max_z;
+    float scale;
 
     min_x = min_y = min_z = std::numeric_limits<float>::max();
     max_x = max_y = max_z = std::numeric_limits<float>::min();
 
     MyMesh::Point p;
-
     for(const auto& v_it: mesh.vertices()){
         p = mesh.point(v_it);
 
@@ -76,14 +76,31 @@ MeshObject::normalize()
         max_z = std::max(max_z, p[2]);
     }
 
+    MyMesh::Point pos( min_x+max_x, min_y+max_y, min_z+max_z);
+    pos *= 0.5f;
+
+    MyMesh::Point size = MyMesh::Point(0.0f, 0.0f, 0.0f);
+    MyMesh::Point bboxmin(min_x, min_y, min_z);
+    MyMesh::Point bboxmax(max_x, max_y, max_z);
+
+    for(size_t i=0; i < 3; ++i)
+        size[i] = std::fabs(bboxmax[i] - bboxmin[i]);
+
+    if( size[0] > size[1] ){
+        if( size[0] > size[2] )
+            scale = 1.0f / size[0];
+        else
+            scale = 1.0f / size[2];
+    }
+    else {
+        if( size[1] > size[2] )
+            scale = 1.0f / size[1];
+        else
+            scale = 1.0f / size[2];
+    }
+
     for(auto& v_it: mesh.vertices()){
-        p = mesh.point(v_it);
-
-        p[0] = (2.0f * (p[0]-min_x)/(max_x-min_x)) - 1.0f;
-        p[1] = (2.0f * (p[1]-min_y)/(max_y-min_y)) - 1.0f;
-        p[2] = (2.0f * (p[2]-min_z)/(max_z-min_z)) - 1.0f;
-
-        mesh.point(v_it) = p;
+        mesh.point(v_it) = (mesh.point(v_it) - pos)*scale;
     }
 }
 
@@ -168,10 +185,12 @@ MeshObject::build(QOpenGLShaderProgram* program)
 
     GLuint* indices = new GLuint[nb_elements];
     GLfloat* positions = new GLfloat[nb_vertices*3];
-    GLfloat* normals = new GLfloat[nb_vertices*3];
+    GLfloat* v_normals = new GLfloat[nb_vertices*3];
+    GLfloat* f_normals = new GLfloat[nb_vertices*3];
     GLfloat* colors = new GLfloat[nb_vertices*3];
 
-    MyMesh::Normal normal;
+    MyMesh::Normal v_normal;
+    MyMesh::Normal f_normal;
     MyMesh::Point point;
     MyMesh::Color color;
     MyMesh::ConstFaceVertexIter cfv_it;
@@ -181,11 +200,15 @@ MeshObject::build(QOpenGLShaderProgram* program)
 
     for(const auto& cv_it: mesh.vertices()){
         /* const vertex iterator */
-        normal = mesh.normal(cv_it);
+        v_normal = mesh.normal(cv_it);
         point = mesh.point(cv_it);
         color = mesh.color(cv_it);
+        f_normal = mesh.normal(*mesh.cvf_iter(cv_it));
+
         for(j=0; j < 3; ++j, ++i){
-            normals[i] = normal[j];
+            v_normals[i] = v_normal[j];
+            f_normals[i] = f_normal[j];
+
             positions[i] = point[j];
             colors[i] = color[j];
         }
@@ -195,13 +218,15 @@ MeshObject::build(QOpenGLShaderProgram* program)
     for(const auto& cf_it: mesh.faces()){
         /* const face iterator */
         cfv_it = mesh.cfv_iter(cf_it);
-        for(j=0; j < 3; ++j, ++i, ++cfv_it)
+        for(j=0; j < 3; ++j, ++i, ++cfv_it){
             indices[i] = GLuint(cfv_it->idx());
+        }
     }
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), colors);
-    set_vertices_normals(program->attributeLocation("normal"), normals);
+    set_vertices_normals(program->attributeLocation("v_normal"), v_normals);
+    set_faces_normals(program->attributeLocation("f_normal"), f_normals);
 
     return initialize(nb_vertices, nb_elements, 3);
 }

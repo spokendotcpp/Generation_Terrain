@@ -10,11 +10,13 @@ DrawableObject::DrawableObject():
     location_vertices_coordinates(-1),
     location_vertices_colors(-1),
     location_vertices_normals(-1),
+    location_faces_normals(-1),
     properties(0),
     raw_vertices_coordinates(nullptr),
     raw_vertices_colors(nullptr),
     raw_vertices_normals(nullptr),
     raw_vertices_indices(nullptr),
+    raw_faces_normals(nullptr),
     vao(nullptr),
     ebo(nullptr),
     vbo(nullptr),
@@ -83,6 +85,13 @@ DrawableObject::update_buffers(QOpenGLShaderProgram* program)
             vbo->write(offset, raw_vertices_normals, bytes);
             program->enableAttributeArray(location_vertices_normals);
             program->setAttributeBuffer(location_vertices_normals, GL_FLOAT, offset, int(tuple_size), 0);
+        }
+
+        if( location_faces_normals >= 0 ){
+            offset += bytes;
+            vbo->write(offset, raw_faces_normals, bytes);
+            program->enableAttributeArray(location_faces_normals);
+            program->setAttributeBuffer(location_faces_normals, GL_FLOAT, offset, int(tuple_size), 0);
         }
     }
     vao->release();
@@ -194,12 +203,21 @@ void
 DrawableObject::copy_normals_to(DrawableObject* obj) const
 {
     const GLfloat* normals = get_vertices_normals();
+    GLfloat* copy_normals = nullptr;
+
     if( normals != nullptr ){
-        GLfloat* copy_normals = new GLfloat[nb_vertices*3];
+        copy_normals = new GLfloat[nb_vertices*3];
         for(size_t i=0; i < nb_vertices*tuple_size; ++i)
             copy_normals[i] = normals[i];
-
         obj->set_vertices_normals(location_vertices_normals, copy_normals);
+    }
+
+    normals = get_faces_normals();
+    if( normals != nullptr ){
+        copy_normals = new GLfloat[nb_vertices*3];
+        for(size_t i=0; i < nb_vertices*tuple_size; ++i)
+            copy_normals[i] = normals[i];
+        obj->set_faces_normals(location_faces_normals, copy_normals);
     }
 }
 
@@ -225,6 +243,12 @@ const GLfloat*
 DrawableObject::get_vertices_normals() const
 {
     return raw_vertices_normals;
+}
+
+const GLfloat*
+DrawableObject::get_faces_normals() const
+{
+    return raw_faces_normals;
 }
 
 bool
@@ -295,6 +319,23 @@ DrawableObject::set_vertices_normals(int shader_location, GLfloat* normals)
 }
 
 void
+DrawableObject::set_faces_normals(int shader_location, GLfloat* normals)
+{
+    if( shader_location < 0 )
+        return;
+
+    if( location_faces_normals >= 0 )
+        free_faces_normals();
+    else
+        ++properties;
+
+    location_faces_normals = shader_location;
+
+    free_faces_normals();
+    raw_faces_normals = normals;
+}
+
+void
 DrawableObject::free_vertices_geometry()
 {
     if( raw_vertices_coordinates != nullptr ){
@@ -326,6 +367,15 @@ DrawableObject::free_vertices_normals()
     if( raw_vertices_normals != nullptr ){
         delete [] raw_vertices_normals;
         raw_vertices_normals = nullptr;
+    }
+}
+
+void
+DrawableObject::free_faces_normals()
+{
+    if( raw_faces_normals != nullptr ){
+        delete [] raw_faces_normals;
+        raw_faces_normals = nullptr;
     }
 }
 

@@ -145,7 +145,7 @@ IcoSphere::build(QOpenGLShaderProgram* program)
     nb_elements = mesh.n_faces() * 3;
 
     GLfloat* positions = new GLfloat[nb_vertices*3];
-    GLfloat* normals = new GLfloat[nb_vertices*3];
+    GLfloat* v_normals = new GLfloat[nb_vertices*3];
     GLuint* indices = new GLuint[nb_elements];
 
     size_t i = 0;
@@ -163,7 +163,7 @@ IcoSphere::build(QOpenGLShaderProgram* program)
         normal = mesh.normal(cv_it);
         for(size_t j=0; j < 3; ++j, ++i){
             positions[i] = point[j];
-            normals[i] = normal[j];
+            v_normals[i] = normal[j];
         }
     }
 
@@ -172,7 +172,7 @@ IcoSphere::build(QOpenGLShaderProgram* program)
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), new GLfloat[nb_vertices*3]);
-    set_vertices_normals(program->attributeLocation("normal"), normals);
+    set_vertices_normals(program->attributeLocation("v_normal"), v_normals);
 
     return initialize(nb_vertices, nb_elements, 3);
 }

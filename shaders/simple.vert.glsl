@@ -3,7 +3,8 @@
 // Get it via Buffer Object
 in vec3 position;
 in vec3 color;
-in vec3 normal;
+in vec3 v_normal;
+in vec3 f_normal;
 
 // Not via Buffer Object
 uniform mat4 model;
@@ -20,6 +21,8 @@ uniform bool light_on;
 uniform bool wireframe_on;
 uniform vec3 wireframe_color;
 
+uniform bool smooth_on;
+
 // To Fragment Shader
 out vec3 fragment_color;
 out vec3 vertex_normal;
@@ -28,6 +31,11 @@ out vec3 light_direction;
 
 void main()
 {
+    // which normal user wants to use
+    vec3 normal = v_normal;
+    if( !smooth_on )
+        normal = f_normal;
+
     // vertex position into MVP space
     gl_Position = projection * view * model * vec4(position, 1.0f);
 

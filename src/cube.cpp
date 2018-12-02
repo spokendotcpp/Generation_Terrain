@@ -61,12 +61,12 @@ Cube::build(QOpenGLShaderProgram* program)
     cube.update_face_normals();
     cube.update_vertex_normals();
 
-    GLfloat* normals = new GLfloat[nb_vertices*3];
+    GLfloat* v_normals = new GLfloat[nb_vertices*3];
     size_t i = 0;
     for(const auto& v: cube.vertices()){
-        MyMesh::Normal n = cube.normal(v);
+        MyMesh::Normal nv = cube.normal(v);
         for(size_t j=0; j < 3; ++j, ++i){
-            normals[i] = n[j];
+            v_normals[i] = nv[j];
         }
     }
 
@@ -75,7 +75,7 @@ Cube::build(QOpenGLShaderProgram* program)
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), new GLfloat[nb_vertices*3]);
-    set_vertices_normals(program->attributeLocation("normal"), normals);
+    set_vertices_normals(program->attributeLocation("v_normal"), v_normals);
 
     return initialize(nb_vertices, nb_elements, 3);
 }

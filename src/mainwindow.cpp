@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent):
     ui->setupUi(this);
     ui->viewer->set_frames_per_second(60);
 
-    this->setWindowTitle("PGAI");
+    this->setWindowTitle("Moteur 3D");
     this->resize(1280, 720);
     this->center();
 
@@ -127,6 +127,11 @@ MainWindow::connect_signals_and_slots()
 
     connect(ui->light_z, QOverload<int>::of(&QSlider::valueChanged),
             [=](int value){ ui->lcd_z->display(value); update_light_pos(); });
+
+
+    //RENDER
+    connect(ui->actionBy_vertices, &QAction::triggered, ui->viewer, [=]{ ui->viewer->smooth_render(true); });
+    connect(ui->actionBy_faces, &QAction::triggered, ui->viewer, [=]{ ui->viewer->smooth_render(false); });
 
     // FILTERS
     // LAPLACE-BELTRAMI

@@ -30,6 +30,7 @@ private:
     int location_vertices_coordinates;
     int location_vertices_colors;
     int location_vertices_normals;
+    int location_faces_normals;
 
     size_t properties;
 
@@ -37,8 +38,14 @@ private:
     GLfloat* raw_vertices_coordinates;
     GLfloat* raw_vertices_colors;
     GLfloat* raw_vertices_normals;
-
     GLuint* raw_vertices_indices;
+
+    // The variable name can be confusing:
+    // Don't forget to duplicate the normals `tuple_size` time.
+    // Indeed, shaders are still working with vertices and not faces.
+    // i.e.:
+    // A triangle has 3 vertices, each vertices has the same normal (the one from the face).
+    GLfloat* raw_faces_normals;
 
     // Buffers
     QOpenGLVertexArrayObject* vao;
@@ -73,6 +80,7 @@ public:
     const GLuint* get_vertices_indices() const;
     const GLfloat* get_vertices_colors() const;
     const GLfloat* get_vertices_normals() const;
+    const GLfloat* get_faces_normals() const;
 
 protected:
     bool initialize(size_t nb_vertices, size_t nb_elements, size_t tuple_size);
@@ -80,11 +88,13 @@ protected:
     void set_vertices_geometry(int shader_location, GLfloat* coordinates, GLuint* indices);
     void set_vertices_colors(int shader_location, GLfloat* data);
     void set_vertices_normals(int shader_location, GLfloat* data);
+    void set_faces_normals(int shader_location, GLfloat* data);
 
 private:
     void free_vertices_geometry();
     void free_vertices_colors();
     void free_vertices_normals();
+    void free_faces_normals();
     void free_buffers();
 
     bool create_buffers();

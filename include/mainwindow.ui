@@ -404,7 +404,21 @@
     </property>
     <addaction name="actionLaplace_Beltrami"/>
    </widget>
+   <widget class="QMenu" name="menuRender">
+    <property name="title">
+     <string>Re&amp;nder</string>
+    </property>
+    <widget class="QMenu" name="menuSmooth">
+     <property name="title">
+      <string>Smooth</string>
+     </property>
+     <addaction name="actionBy_vertices"/>
+     <addaction name="actionBy_faces"/>
+    </widget>
+    <addaction name="menuSmooth"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuRender"/>
    <addaction name="menuProcess"/>
   </widget>
   <action name="actionLoad_OBJ">
@@ -425,12 +439,22 @@
     <string>&amp;Laplace-Beltrami</string>
    </property>
   </action>
+  <action name="actionBy_vertices">
+   <property name="text">
+    <string>By vertices</string>
+   </property>
+  </action>
+  <action name="actionBy_faces">
+   <property name="text">
+    <string>By faces</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>MeshViewerWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>../../include/meshviewerwidget.h</header>
+   <header>include/meshviewerwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

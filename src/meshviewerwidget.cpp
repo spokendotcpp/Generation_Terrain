@@ -16,6 +16,8 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     wireframe_on = true;
     fill_on = true;
 
+    smooth_on = true;
+
     frames = 0;
     set_frames_per_second(60);
     lap = Clock::now();
@@ -95,7 +97,7 @@ MeshViewerWidget::default_view()
     rotation = QMatrix4x4();
     rotation.rotate(25.0f, 1.0f, 1.0f, 0.0f);
 
-    position = QVector3D(0.0f, 0.0f, -5.0f);
+    position = QVector3D(0.0f, 0.0f, -2.0f);
     update_view();
 }
 
@@ -137,7 +139,6 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    axis->scale(2.0f, 2.0f, 2.0f);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -197,6 +198,7 @@ MeshViewerWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     program->bind();
     {
+        program->setUniformValue("smooth_on", smooth_on);
         // in case user has modified light pos
         light->to_gpu(program);
 
@@ -303,7 +305,7 @@ void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
     float z = position.z();
-    float step = 0.5f;
+    float step = 0.1f;
 
     /* Wheel go down */
     if( event->delta() < 0 ){
@@ -326,7 +328,7 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
 void
 MeshViewerWidget::handle_key_events(QKeyEvent* event)
 {
-    float step = 0.5f;
+    float step = 0.1f;
 
     switch( event->key() ){
     case Qt::Key_Up :
@@ -395,6 +397,13 @@ MeshViewerWidget::update_lap()
 {
     ++frames;
     lap = Clock::now();
+}
+
+void
+MeshViewerWidget::smooth_render(bool on)
+{
+    smooth_on = on;
+    update();
 }
 
 // The delay between two time in microseconds

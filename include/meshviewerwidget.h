@@ -69,6 +69,7 @@ private:
 
     bool wireframe_on;
     bool fill_on;
+    bool smooth_on;
 
 /* Public methods */
 public:
@@ -102,6 +103,8 @@ public:
     void set_frames_per_second(size_t fps);
     size_t get_computed_frames() const;
     void reset_computed_frames();
+
+    void smooth_render(bool on);
 
     /* Difference between two high resolution clock time point as microseconds */
     static long microseconds_diff(
