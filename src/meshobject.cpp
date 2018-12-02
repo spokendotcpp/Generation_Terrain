@@ -1,14 +1,15 @@
 #include "../include/meshobject.h"
 
 #include <iostream>
+#include <limits>
 
 MeshObject::MeshObject(const std::string& _filename):
     DrawableObject(),
     filename(_filename),
     _nb_faces(0),
     _nb_vertices(0),
-    _mean_vertices_valence(0),
-    _mean_angles_dihedral(0)
+    dihedral_angles(nullptr),
+    valences(nullptr)
 {
     mesh.request_face_normals();
     mesh.request_vertex_normals();
@@ -18,8 +19,12 @@ MeshObject::MeshObject(const std::string& _filename):
         _nb_faces = mesh.n_faces();
         _nb_vertices = mesh.n_vertices();
 
-        compute_mean_dihedral_angles();
-        compute_mean_valence_vertices();
+        dihedral_angles = new float[mesh.n_edges()];
+        valences = new uint[_nb_vertices];
+
+        normalize();
+        update_valence_vertices();
+        update_dihedral_angles();
 
         std::cout << "Calculating vertex normals ... ";
         mesh.update_face_normals();
@@ -36,31 +41,73 @@ MeshObject::~MeshObject()
     mesh.release_vertex_normals();
     mesh.release_face_normals();
     mesh.release_vertex_colors();
-}
 
-void
-MeshObject::compute_mean_valence_vertices()
-{
-    _mean_vertices_valence = 0.0;
-
-    for(const auto& v_it: mesh.vertices())
-        _mean_vertices_valence += double(mesh.valence(v_it));
-
-    _mean_vertices_valence /= double(_nb_vertices);
-}
-
-void
-MeshObject::compute_mean_dihedral_angles()
-{
-    _mean_angles_dihedral = 0.0;
-
-    for(const auto& e_it: mesh.edges()){
-        float angle = mesh.calc_dihedral_angle(e_it);
-        angle = std::sqrt(angle * angle); // get the norm
-        _mean_angles_dihedral += double(angle);
+    if( dihedral_angles != nullptr ){
+        delete [] dihedral_angles;
+        dihedral_angles = nullptr;
     }
 
-    _mean_angles_dihedral /= double(mesh.n_edges());
+    if( valences != nullptr ){
+        delete [] valences;
+        valences = nullptr;
+    }
+}
+
+void
+MeshObject::normalize()
+{
+    float min_x, min_y, min_z;
+    float max_x, max_y, max_z;
+
+    min_x = min_y = min_z = std::numeric_limits<float>::max();
+    max_x = max_y = max_z = std::numeric_limits<float>::min();
+
+    MyMesh::Point p;
+
+    for(const auto& v_it: mesh.vertices()){
+        p = mesh.point(v_it);
+
+        min_x = std::min(min_x, p[0]);
+        min_y = std::min(min_y, p[1]);
+        min_z = std::min(min_z, p[2]);
+
+        max_x = std::max(max_x, p[0]);
+        max_y = std::max(max_y, p[1]);
+        max_z = std::max(max_z, p[2]);
+    }
+
+    for(auto& v_it: mesh.vertices()){
+        p = mesh.point(v_it);
+
+        p[0] = (2.0f * (p[0]-min_x)/(max_x-min_x)) - 1.0f;
+        p[1] = (2.0f * (p[1]-min_y)/(max_y-min_y)) - 1.0f;
+        p[2] = (2.0f * (p[2]-min_z)/(max_z-min_z)) - 1.0f;
+
+        mesh.point(v_it) = p;
+    }
+}
+
+void
+MeshObject::update_valence_vertices()
+{   
+    if( valences != nullptr ){
+        size_t i = 0;
+        for(const auto& v_it: mesh.vertices()){
+            valences[i++] = mesh.valence(v_it);
+        }
+    }
+}
+
+void
+MeshObject::update_dihedral_angles()
+{
+    if( dihedral_angles != nullptr ){
+        size_t i = 0;
+        for(const auto& e_it: mesh.edges()){
+            float angle = mesh.calc_dihedral_angle(e_it);
+            dihedral_angles[i++] = std::sqrt(angle * angle);
+        }
+    }
 }
 
 const std::string&
@@ -81,18 +128,37 @@ MeshObject::nb_vertices() const
     return _nb_vertices;
 }
 
-const double&
-MeshObject::mean_vertices_valence() const
+float
+MeshObject::mean_dihedral() const
 {
-    return _mean_vertices_valence;
+    float mean = 0.0f;
+    if( valences != nullptr ){
+        float nb_edges = mesh.n_edges();
+        if( nb_edges > 0 ){
+            for(size_t i=0; i < nb_edges; ++i)
+                mean += dihedral_angles[i];
+
+            mean /= float(nb_edges);
+        }
+    }
+    return mean;
 }
 
-const double&
-MeshObject::mean_angles_dihedral() const
+float
+MeshObject::mean_valence() const
 {
-    return _mean_angles_dihedral;
-}
+    float mean = 0.0f;
+    if( dihedral_angles != nullptr ){
+        if( _nb_vertices > 0 ){
+            for(size_t i=0; i < _nb_vertices; ++i)
+                mean += float(valences[i]);
 
+            mean /= float(_nb_vertices);
+        }
+    }
+
+    return mean;
+}
 
 bool
 MeshObject::build(QOpenGLShaderProgram* program)
@@ -121,7 +187,7 @@ MeshObject::build(QOpenGLShaderProgram* program)
         for(j=0; j < 3; ++j, ++i){
             normals[i] = normal[j];
             positions[i] = point[j];
-            colors[i] = colors[j];
+            colors[i] = color[j];
         }
     }
 
@@ -246,5 +312,4 @@ MeshObject::update_normals()
 {
     mesh.update_face_normals();
     mesh.update_vertex_normals();
-    compute_mean_dihedral_angles();
 }

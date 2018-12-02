@@ -32,7 +32,7 @@ find_package(OpenGL REQUIRED)
 # FIND OPENMESH LIBRARIES
 find_library(OPENMESH_CORE
     NAMES OpenMeshCore
-    PATHS lib/sOpenMesh-7.1/lib
+    PATHS lib/OpenMesh-7.1/lib
 )
 
 find_library(OPENMESH_TOOLS

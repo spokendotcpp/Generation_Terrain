@@ -137,7 +137,7 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    axis->scale(5.0f, 5.0f, 5.0f);
+    axis->scale(2.0f, 2.0f, 2.0f);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -489,10 +489,10 @@ MeshViewerWidget::status_message()
         msg.append(QString::number(obj->nb_vertices()));
         msg.append(" | Faces: ");
         msg.append(QString::number(obj->nb_faces()));
-        msg.append(" | Vertices valence: ");
-        msg.append(QString::number(obj->mean_vertices_valence()));
-        msg.append(" | Dihedral angles: ");
-        msg.append(QString::number(qRadiansToDegrees(obj->mean_angles_dihedral())));
+        msg.append(" | Mean valence: ");
+        msg.append(QString::number(double(obj->mean_valence())));
+        msg.append(" | Mean dihedral angles: ");
+        msg.append(QString::number(qRadiansToDegrees(double(obj->mean_dihedral()))));
     }
     return msg;
 }
@@ -509,6 +509,7 @@ MeshViewerWidget::apply_Laplace_Beltrami()
     }
 
     obj->update_normals();
+    obj->update_dihedral_angles();
 
     MeshObject tmp(*obj);
 

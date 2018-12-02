@@ -12,13 +12,13 @@ private:
     size_t _nb_faces;
     size_t _nb_vertices;
 
-    double _mean_vertices_valence;
-    double _mean_angles_dihedral;
-
     MyMesh mesh;
 
-    void compute_mean_valence_vertices();
-    void compute_mean_dihedral_angles();
+    float* dihedral_angles;
+    uint* valences;
+
+private:
+    void normalize();
 
 public:
     MeshObject(const std::string&);
@@ -27,10 +27,13 @@ public:
     const std::string& get_filename() const;
     const size_t& nb_faces() const;
     const size_t& nb_vertices() const;
-    const double& mean_vertices_valence() const;
-    const double& mean_angles_dihedral() const;
+    float mean_valence() const;
+    float mean_dihedral() const;
 
     void Laplace_Beltrami_operator(float h, float lambda);
+
+    void update_valence_vertices();
+    void update_dihedral_angles();
     void update_normals();
 
     static float distance(MyMesh::Point p1, MyMesh::Point p2);
