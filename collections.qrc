@@ -2,6 +2,6 @@
     <qresource prefix="/">
         <file>shaders/simple.vert.glsl</file>
         <file>shaders/simple.frag.glsl</file>
-        <file>mesh_files/bunnyLowPoly.obj</file>
+        <file>include/mainwindow.ui</file>
     </qresource>
 </RCC>

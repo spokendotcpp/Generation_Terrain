@@ -21,6 +21,7 @@
 
 class MainWindow : public QMainWindow
 {
+    Q_OBJECT
 private:
     Ui::MainWindow* ui;
 
@@ -32,6 +33,8 @@ public:
     void keyPressEvent(QKeyEvent*) override;
     void timerEvent(QTimerEvent* event) override;
 
+private:
+    void connect_signals_and_slots();
 };
 
 #endif // MAINWINDOW_H

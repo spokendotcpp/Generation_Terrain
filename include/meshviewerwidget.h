@@ -33,6 +33,7 @@ typedef std::chrono::steady_clock Clock;
 
 class MeshViewerWidget: public QOpenGLWidget
 {
+    Q_OBJECT
 /* Private members */
 private:
     //ShaderProgram* program; // Shader program
@@ -111,6 +112,7 @@ public:
     inline MeshObject* get_mesh(){ return obj; }
 
     // SLOTS
+public slots:
     /* Load an *.obj file from filesystem */
     void get_obj_from_filesystem(const std::string& filename);
 

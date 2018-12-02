@@ -39,6 +39,19 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QLabel" name="status">
+        <property name="maximumSize">
+         <size>
+          <width>1920</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>No file loaded yet</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
@@ -51,7 +64,7 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>120</width>
+        <width>150</width>
         <height>0</height>
        </size>
       </property>
@@ -374,7 +387,7 @@
      <x>0</x>
      <y>0</y>
      <width>941</width>
-     <height>29</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -394,7 +407,6 @@
    <addaction name="menuFile"/>
    <addaction name="menuProcess"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="actionLoad_OBJ">
    <property name="text">
     <string>&amp;Load OBJ</string>
@@ -410,7 +422,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Laplace-Beltrami</string>
+    <string>&amp;Laplace-Beltrami</string>
    </property>
   </action>
  </widget>
@@ -418,7 +430,7 @@
   <customwidget>
    <class>MeshViewerWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>../../../include/meshviewerwidget.h</header>
+   <header>../../include/meshviewerwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

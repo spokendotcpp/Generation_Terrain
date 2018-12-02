@@ -74,7 +74,7 @@ ArcBall::get_rotation_matrix(int curr_x, int curr_y, int last_x, int last_y)
     QMatrix4x4 rotation;
     rotation.setToIdentity();
 
-    // If the axis vector is not to small, rotate
+    // If the axis vector is not too small, rotate
     if( axis.length() > 1.0e-5f ){
         rotation.rotate(QQuaternion(angle, axis));
     }

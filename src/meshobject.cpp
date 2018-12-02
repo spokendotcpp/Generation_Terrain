@@ -1,7 +1,6 @@
 #include "../include/meshobject.h"
 
 #include <iostream>
-#include <QtMath>
 
 MeshObject::MeshObject(const std::string& _filename):
     DrawableObject(),
@@ -23,7 +22,8 @@ MeshObject::MeshObject(const std::string& _filename):
         compute_mean_valence_vertices();
 
         std::cout << "Calculating vertex normals ... ";
-        update_normals();
+        mesh.update_face_normals();
+        mesh.update_vertex_normals();
         std::cout << "DONE" << std::endl;
     }
     else {
@@ -54,10 +54,13 @@ MeshObject::compute_mean_dihedral_angles()
 {
     _mean_angles_dihedral = 0.0;
 
-    for(const auto& e_it: mesh.edges())
-        _mean_angles_dihedral += double(mesh.calc_dihedral_angle(e_it));
+    for(const auto& e_it: mesh.edges()){
+        float angle = mesh.calc_dihedral_angle(e_it);
+        angle = std::sqrt(angle * angle); // get the norm
+        _mean_angles_dihedral += double(angle);
+    }
 
-    _mean_angles_dihedral/= double(mesh.n_edges());
+    _mean_angles_dihedral /= double(mesh.n_edges());
 }
 
 const std::string&
@@ -203,6 +206,9 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
 
             // Sum part
             sum_cot = (cot_alpha + cot_beta);
+            if( std::isnan( sum_cot ) )
+                sum_cot = 1.0f;
+
             deltas[i] += (sum_cot * vi_minus_v);
 
             // Compute area
@@ -240,4 +246,5 @@ MeshObject::update_normals()
 {
     mesh.update_face_normals();
     mesh.update_vertex_normals();
+    compute_mean_dihedral_angles();
 }

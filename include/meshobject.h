@@ -2,6 +2,7 @@
 #define MESHOBJECT_H
 
 #include <string>
+#include <QtMath>
 #include "drawableobject.h"
 
 class MeshObject : public DrawableObject

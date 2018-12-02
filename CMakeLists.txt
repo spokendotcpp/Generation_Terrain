@@ -4,6 +4,9 @@ project(Generation_De_Terrain)
 
 set(exe_name "fields_generation")
 
+# Find includes in corresponding build directories
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
 # CMAKE QT OPTIONS
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -29,12 +32,18 @@ find_package(OpenGL REQUIRED)
 # FIND OPENMESH LIBRARIES
 find_library(OPENMESH_CORE
     NAMES OpenMeshCore
-    PATHS OpenMesh-7.1/lib
+    PATHS lib/sOpenMesh-7.1/lib
 )
 
 find_library(OPENMESH_TOOLS
     NAMES OpenMeshTools
-    PATHS OpenMesh-7.1/lib
+    PATHS lib/OpenMesh-7.1/lib
+)
+
+# FIND QWT LIBRARY
+find_library(QWT
+    NAMES qwt
+    PATHS lib/qwt-6.1.3/lib
 )
 
 # CPP SOURCES FILES
@@ -77,7 +86,10 @@ add_executable(
 target_include_directories(
     ${exe_name} PUBLIC
     # OPENMESH HEADERS (.hh)
-    OpenMesh-7.1/include
+    lib/OpenMesh-7.1/include
+
+    # QWT HEADERS
+    lib/qwt-6.1.3/include
 )
 
 # -l
@@ -88,6 +100,8 @@ target_link_libraries(
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
+
+    ${QWT}
 
     ${OPENGL_LIBRARIES}
 

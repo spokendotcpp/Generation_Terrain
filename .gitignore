@@ -1,4 +1,2 @@
 build/
 CMakeLists.txt.user
-mesh_files/
-*.obj
