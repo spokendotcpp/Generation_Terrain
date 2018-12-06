@@ -418,7 +418,6 @@ MeshViewerWidget::microseconds_diff(
 void
 MeshViewerWidget::get_obj_from_filesystem(const std::string& filename)
 {
-    makeCurrent();
     MeshObject* new_obj = new MeshObject(filename);
     if( new_obj != nullptr ){
         if( obj != nullptr ){
@@ -426,19 +425,19 @@ MeshViewerWidget::get_obj_from_filesystem(const std::string& filename)
             obj = nullptr;
         }
 
+        makeCurrent();
         program->bind();
         {
            new_obj->build(program);
            new_obj->use_unique_color(0.0f, 1.0f, 1.0f);
            new_obj->update_buffers(program);
+           obj = new_obj;
         }
         program->release();
-        obj = new_obj;
+        doneCurrent();
     }
     else
         std::cerr << "Failed to load mesh file." << std::endl;
-
-    doneCurrent();
 }
 
 void
@@ -509,23 +508,23 @@ MeshViewerWidget::status_message()
 void
 MeshViewerWidget::apply_Laplace_Beltrami()
 {
-    int r = QInputDialog::getInt(this, "Laplace-Beltrami", "number of iterations:", 10);
+    int r = QInputDialog::getInt(this, "Laplace-Beltrami", "number of iterations:", 1);
     if( r < 0 )
         r = 0;
 
     for(int i=0; i < r; ++i){
-        obj->Laplace_Beltrami_operator(100.f, 0.9f);
+        obj->Laplace_Beltrami_operator(1.f, 0.00009f);
     }
 
-    obj->update_normals();
-    obj->update_dihedral_angles();
-
-    MeshObject tmp(*obj);
-
     makeCurrent();
-    obj->build(program);
-    tmp.copy_colors_to(obj);
-    obj->update_buffers(program);
-
+    program->bind();
+    {
+        obj->update_normals();
+        obj->update_dihedral_angles();
+        obj->build(program);
+        obj->use_unique_color(0.0f, 1.0f, 1.0f);
+        obj->update_buffers(program);
+    }
+    program->release();
     doneCurrent();
 }

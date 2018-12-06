@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent):
 
     connect_signals_and_slots();
 
+    /*
     QMainWindow* window = new QMainWindow(this);
     QwtPlot* p = new QwtPlot(window);
 
@@ -28,7 +29,7 @@ MainWindow::MainWindow(QWidget *parent):
     p->replot();
 
     window->show();
-
+    */
 
     // start a Callback timer of (1s, 1000ms)
     startTimer(1000);

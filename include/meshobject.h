@@ -17,8 +17,11 @@ private:
     float* dihedral_angles;
     uint* valences;
 
+    OpenMesh::HPropHandleT<int> gap_id;
+
 private:
     void normalize();
+    std::vector<std::vector<MyMesh::VertexHandle>> find_gaps();
 
 public:
     MeshObject(const std::string&);
@@ -36,7 +39,9 @@ public:
     void update_dihedral_angles();
     void update_normals();
 
-    static float distance(MyMesh::Point p1, MyMesh::Point p2);
+    static float distance(MyMesh::Point, MyMesh::Point);
+    static float triangle_area(MyMesh::Point, MyMesh::Point, MyMesh::Point);
+    static float triangle_quality(MyMesh::Point, MyMesh::Point, MyMesh::Point);
 
     bool build(QOpenGLShaderProgram* program) override;
 };

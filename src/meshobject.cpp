@@ -13,7 +13,9 @@ MeshObject::MeshObject(const std::string& _filename):
 {
     mesh.request_face_normals();
     mesh.request_vertex_normals();
-    mesh.request_vertex_colors();
+
+    mesh.add_property(gap_id, "gap_id");
+    mesh.property(gap_id).set_persistent(true);
 
     if( OpenMesh::IO::read_mesh(mesh, filename) ){
         _nb_faces = mesh.n_faces();
@@ -23,13 +25,12 @@ MeshObject::MeshObject(const std::string& _filename):
         valences = new uint[_nb_vertices];
 
         normalize();
+        mesh.update_face_normals();
+        mesh.update_vertex_normals();
         update_valence_vertices();
         update_dihedral_angles();
 
-        std::cout << "Calculating vertex normals ... ";
-        mesh.update_face_normals();
-        mesh.update_vertex_normals();
-        std::cout << "DONE" << std::endl;
+        find_gaps();
     }
     else {
         std::cerr << "Failed to read " << filename << " file" << std::endl;
@@ -40,7 +41,6 @@ MeshObject::~MeshObject()
 {
     mesh.release_vertex_normals();
     mesh.release_face_normals();
-    mesh.release_vertex_colors();
 
     if( dihedral_angles != nullptr ){
         delete [] dihedral_angles;
@@ -102,6 +102,76 @@ MeshObject::normalize()
     for(auto& v_it: mesh.vertices()){
         mesh.point(v_it) = (mesh.point(v_it) - pos)*scale;
     }
+}
+
+std::vector<std::vector<MyMesh::VertexHandle>>
+MeshObject::find_gaps()
+{
+    std::vector<std::vector<MyMesh::VertexHandle>> gaps;
+
+    // Init properties
+    int id = -1;
+    for(auto& he_it: mesh.halfedges())
+        mesh.property(gap_id, he_it) = id;
+
+    // For each Half-Edge, findout if it's boundary and not added into a previous hole.
+    for(auto& he_it: mesh.halfedges()){
+        if( mesh.is_boundary(he_it) && (mesh.property(gap_id, he_it) == -1) ){
+            mesh.property(gap_id, he_it) = ++id;
+
+            std::vector<MyMesh::VertexHandle> gap;
+            gap.push_back(mesh.to_vertex_handle(he_it));
+
+            // seek neighbors
+            MyMesh::HalfedgeHandle he = mesh.next_halfedge_handle(he_it);
+            while( he != he_it ){
+                mesh.property(gap_id, he) = id;
+                gap.push_back(mesh.to_vertex_handle(he));
+                he = mesh.next_halfedge_handle(he);
+            }
+
+            gaps.push_back(gap);
+        }
+    }
+
+    std::cerr << "Total number of gaps: " << gaps.size() << std::endl;
+
+    // Allocate Matrix of size gaps.size() x gaps.size()
+    float** val = new float*[gaps[0].size()];
+    for(size_t i=0; i < gaps[0].size(); ++i)
+        val[i] = new float[gaps[0].size()];
+
+    // Initialize
+    for(size_t i=0; i < gaps[0].size(); ++i)
+        for(size_t j=0; j < gaps[0].size(); ++j)
+            val[i][j] = 0.0f;
+
+    for(size_t i=0; i < gaps[0].size(); ++i){
+        for(size_t j=0; j < gaps[0].size(); ++j){
+            if( j - i == 2 ){
+                val[i][j] =
+                    triangle_quality(
+                        mesh.point(gaps[0][i]),
+                        mesh.point(gaps[0][(i+1)%gaps[0].size()]),
+                        mesh.point(gaps[0][(i+2)%gaps[0].size()])
+                    );
+            }
+            std::cerr << val[i][j] << " , ";
+        }
+
+        std::cerr << std::endl;
+    }
+
+    // Free memory
+    for(size_t i=0; i < gaps[0].size(); ++i){
+        delete [] val[i];
+        val[i] = nullptr;
+    }
+
+    delete [] val;
+    val = nullptr;
+
+    return gaps;
 }
 
 void
@@ -190,27 +260,21 @@ MeshObject::build(QOpenGLShaderProgram* program)
     GLfloat* colors = new GLfloat[nb_vertices*3];
 
     MyMesh::Normal v_normal;
-    MyMesh::Normal f_normal;
+    //MyMesh::Normal f_normal;
     MyMesh::Point point;
-    MyMesh::Color color;
     MyMesh::ConstFaceVertexIter cfv_it;
 
     size_t i = 0;
     size_t j = 0;
-
     for(const auto& cv_it: mesh.vertices()){
         /* const vertex iterator */
         v_normal = mesh.normal(cv_it);
         point = mesh.point(cv_it);
-        color = mesh.color(cv_it);
-        f_normal = mesh.normal(*mesh.cvf_iter(cv_it));
 
         for(j=0; j < 3; ++j, ++i){
             v_normals[i] = v_normal[j];
-            f_normals[i] = f_normal[j];
-
             positions[i] = point[j];
-            colors[i] = color[j];
+            colors[i] = 1.0f;
         }
     }
 
@@ -241,6 +305,23 @@ MeshObject::distance(MyMesh::Point p1, MyMesh::Point p2)
         std::pow(p2[2]-p1[2], 2.0f));
 }
 
+float
+MeshObject::triangle_area(MyMesh::Point p1, MyMesh::Point p2, MyMesh::Point p3)
+{
+    float a = distance(p1, p2);
+    float b = distance(p1, p3);
+    float c = distance(p2, p3);
+    float p = (a+b+c)/2.0f;
+
+    return std::sqrt(p*(p-a)*(p-b)*(p-c));
+}
+
+float
+MeshObject::triangle_quality(MyMesh::Point p1, MyMesh::Point p2, MyMesh::Point p3)
+{
+    return triangle_area(p1, p2, p3);
+}
+
 void
 MeshObject::Laplace_Beltrami_operator(float h, float lambda)
 {
@@ -252,8 +333,7 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
     float beta;
 
     float sum_cot;
-    size_t i = 0;
-    MyMesh::Point* deltas = new MyMesh::Point[mesh.n_vertices()];
+    MyMesh::Point delta;
 
     // For all vertices
     for(auto& v_it: mesh.vertices()){
@@ -262,7 +342,7 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
         v = mesh.point(v_it);
 
         area = 0.0f;
-        deltas[i] = MyMesh::Point(0.0f, 0.0f, 0.0f);
+        delta = MyMesh::Point(0.0f, 0.0f, 0.0f);
 
         // First ring neighbors
         while( cvv_ccwit != mesh.cvv_ccwend(v_it) ){
@@ -270,11 +350,11 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
             vi = mesh.point(*(++cvv_ccwit));
             vi_right = mesh.point(*(++cvv_ccwit));
 
-            MyMesh::Point v0_alpha = (vi_left - vi);
-            MyMesh::Point v1_alpha = (vi_left - v);
+            MyMesh::Point v0_alpha = (vi - vi_left).normalize();
+            MyMesh::Point v1_alpha = (v - vi_left).normalize();
 
-            MyMesh::Point v0_beta = (vi_right - vi);
-            MyMesh::Point v1_beta = (vi_right - v);
+            MyMesh::Point v0_beta = (vi - vi_right).normalize();
+            MyMesh::Point v1_beta = (v - vi_right).normalize();
 
             MyMesh::Point vi_minus_v = (vi - v);
 
@@ -297,39 +377,22 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
 
             // Sum part
             sum_cot = (cot_alpha + cot_beta);
-            if( std::isnan( sum_cot ) )
-                sum_cot = 1.0f;
-
-            deltas[i] += (sum_cot * vi_minus_v);
+            delta += (sum_cot * vi_minus_v);
 
             // Compute area
             // https://fr.wikipedia.org/wiki/Aire_d%27un_triangle
-            MyMesh::Point barycenter_l = ((vi_left + vi + v) / 3.0f);
-            MyMesh::Point barycenter_r = ((vi_right + vi + v) / 3.0f);
+            MyMesh::Point barycenter_l = ((vi_left + vi + v) / 3.0f).normalize();
+            MyMesh::Point barycenter_r = ((vi_right + vi + v) / 3.0f).normalize();
 
-            float a = distance(v, barycenter_l);
-            float b = distance(v, barycenter_r);
-            float c = distance(barycenter_l, barycenter_r);
-            float p = (a+b+c)/2.0f;
-
-            area += std::sqrt(p*(p-a)*(p-b)*(p-c));
+            area += triangle_area(barycenter_l, barycenter_r, v);
 
             // Since we `++` two times, we want to fallback once for the next iteration.
             --cvv_ccwit;
         }
 
-        // Final compute, where deltas[i] holds all the sum part
-        deltas[i] = 0.5f*area * deltas[i]; // 1/2 * Area * [Sum]
-        ++i;
+        delta = 0.5f * area * delta; // 1/2 * Area * [Sum]
+        mesh.point(v_it) += (h * lambda * delta);
     }
-
-    // Applies deltas to mesh vertices
-    i = 0;
-    for(auto& v: mesh.vertices())
-        mesh.point(v) += (h * lambda * deltas[i++]);
-
-    delete [] deltas;
-    deltas = nullptr;
 }
 
 void
