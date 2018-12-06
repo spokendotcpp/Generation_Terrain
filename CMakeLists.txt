@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(Generation_De_Terrain)
-
-set(exe_name "fields_generation")
+project(Viewer3D)
+set(exe_name "viewer")
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -41,7 +40,7 @@ find_library(OPENMESH_TOOLS
 )
 
 # FIND QWT LIBRARY
-find_library(QWT
+find_library(QWT_LIBRARY
     NAMES qwt
     PATHS libs/qwt-6.1.3/lib
 )
@@ -85,7 +84,7 @@ add_executable(
 # -I
 target_include_directories(
     ${exe_name} PUBLIC
-    # OPENMESH HEADERS (.hh)
+    # OPENMESH HEADERS
     libs/OpenMesh-7.1/include
 
     # QWT HEADERS
@@ -101,7 +100,7 @@ target_link_libraries(
     Qt5::Gui
     Qt5::OpenGL
 
-    ${QWT}
+    ${QWT_LIBRARY}
 
     ${OPENGL_LIBRARIES}
 

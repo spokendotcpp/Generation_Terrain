@@ -499,7 +499,7 @@ MeshViewerWidget::status_message()
         msg.append(QString::number(obj->nb_faces()));
         msg.append(" | Mean valence: ");
         msg.append(QString::number(double(obj->mean_valence())));
-        msg.append(" | Mean dihedral angles: ");
+        msg.append(" | Mean dihedral angle: ");
         msg.append(QString::number(qRadiansToDegrees(double(obj->mean_dihedral()))));
     }
     return msg;
@@ -513,7 +513,7 @@ MeshViewerWidget::apply_Laplace_Beltrami()
         r = 0;
 
     for(int i=0; i < r; ++i){
-        obj->Laplace_Beltrami_operator(1.f, 0.00009f);
+        obj->apply_Laplace_Beltrami(1.0f, 0.00009f);
     }
 
     makeCurrent();

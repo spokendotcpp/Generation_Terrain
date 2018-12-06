@@ -14,6 +14,7 @@ MeshObject::MeshObject(const std::string& _filename):
     mesh.request_face_normals();
     mesh.request_vertex_normals();
 
+    // This property will be used in the function `find_gaps()`
     mesh.add_property(gap_id, "gap_id");
     mesh.property(gap_id).set_persistent(true);
 
@@ -23,14 +24,12 @@ MeshObject::MeshObject(const std::string& _filename):
 
         dihedral_angles = new float[mesh.n_edges()];
         valences = new uint[_nb_vertices];
+        laplace_beltrami_operators = new MyMesh::Point[_nb_vertices];
 
         normalize();
-        mesh.update_face_normals();
-        mesh.update_vertex_normals();
+        update_normals();
         update_valence_vertices();
         update_dihedral_angles();
-
-        find_gaps();
     }
     else {
         std::cerr << "Failed to read " << filename << " file" << std::endl;
@@ -50,6 +49,11 @@ MeshObject::~MeshObject()
     if( valences != nullptr ){
         delete [] valences;
         valences = nullptr;
+    }
+
+    if( laplace_beltrami_operators != nullptr ){
+        delete [] laplace_beltrami_operators;
+        laplace_beltrami_operators = nullptr;
     }
 }
 
@@ -136,6 +140,8 @@ MeshObject::find_gaps()
 
     std::cerr << "Total number of gaps: " << gaps.size() << std::endl;
 
+    /*
+     * TODO PART *
     // Allocate Matrix of size gaps.size() x gaps.size()
     float** val = new float*[gaps[0].size()];
     for(size_t i=0; i < gaps[0].size(); ++i)
@@ -150,6 +156,7 @@ MeshObject::find_gaps()
         for(size_t j=0; j < gaps[0].size(); ++j){
             if( j - i == 2 ){
                 val[i][j] =
+                    // TODO
                     triangle_quality(
                         mesh.point(gaps[0][i]),
                         mesh.point(gaps[0][(i+1)%gaps[0].size()]),
@@ -170,6 +177,7 @@ MeshObject::find_gaps()
 
     delete [] val;
     val = nullptr;
+    */
 
     return gaps;
 }
@@ -260,7 +268,7 @@ MeshObject::build(QOpenGLShaderProgram* program)
     GLfloat* colors = new GLfloat[nb_vertices*3];
 
     MyMesh::Normal v_normal;
-    //MyMesh::Normal f_normal;
+    MyMesh::Normal f_normal;
     MyMesh::Point point;
     MyMesh::ConstFaceVertexIter cfv_it;
 
@@ -270,7 +278,6 @@ MeshObject::build(QOpenGLShaderProgram* program)
         /* const vertex iterator */
         v_normal = mesh.normal(cv_it);
         point = mesh.point(cv_it);
-
         for(j=0; j < 3; ++j, ++i){
             v_normals[i] = v_normal[j];
             positions[i] = point[j];
@@ -278,14 +285,39 @@ MeshObject::build(QOpenGLShaderProgram* program)
         }
     }
 
+    /*
+     *  table used to fill normal per faces.
+     *  one face -> 3 vertices
+     *  one face -> one normal <- 3 vertices
+     *
+     *  each vertices of a face have the same normal (the one from the face).
+     *  problem: multiple faces can have the same vertice.
+     *  fix: first time you met the vertice, put the flag to true (looked).
+     *  next face which will met the vertice won't touch its normal.
+     */
+    bool* looked = new bool[nb_vertices];
+    for(i=0; i < nb_vertices; ++i)
+        looked[i] = false;
+
     i = 0;
     for(const auto& cf_it: mesh.faces()){
         /* const face iterator */
         cfv_it = mesh.cfv_iter(cf_it);
+        f_normal = mesh.normal(cf_it);
         for(j=0; j < 3; ++j, ++i, ++cfv_it){
             indices[i] = GLuint(cfv_it->idx());
+
+            // fill the normal per faces datas
+            if( !looked[indices[i]] ){
+                f_normals[(indices[i]*3)+0] = f_normal[0];
+                f_normals[(indices[i]*3)+1] = f_normal[1];
+                f_normals[(indices[i]*3)+2] = f_normal[2];
+                looked[indices[i]] = true;
+            }
         }
     }
+
+    delete [] looked;
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), colors);
@@ -323,7 +355,7 @@ MeshObject::triangle_quality(MyMesh::Point p1, MyMesh::Point p2, MyMesh::Point p
 }
 
 void
-MeshObject::Laplace_Beltrami_operator(float h, float lambda)
+MeshObject::compute_Laplace_Beltrami_operators()
 {
     MyMesh::ConstVertexVertexCCWIter cvv_ccwit;
     MyMesh::Point vi_left, vi_right, vi, v;
@@ -333,16 +365,16 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
     float beta;
 
     float sum_cot;
-    MyMesh::Point delta;
 
     // For all vertices
+    size_t i = 0;
     for(auto& v_it: mesh.vertices()){
         /* Const Vertex Vertex Counter-Clock Wise Iterator */
         cvv_ccwit = mesh.cvv_ccwiter(v_it);
         v = mesh.point(v_it);
 
         area = 0.0f;
-        delta = MyMesh::Point(0.0f, 0.0f, 0.0f);
+        laplace_beltrami_operators[i] = MyMesh::Point(0.0f, 0.0f, 0.0f);
 
         // First ring neighbors
         while( cvv_ccwit != mesh.cvv_ccwend(v_it) ){
@@ -350,13 +382,13 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
             vi = mesh.point(*(++cvv_ccwit));
             vi_right = mesh.point(*(++cvv_ccwit));
 
-            MyMesh::Point v0_alpha = (vi - vi_left).normalize();
-            MyMesh::Point v1_alpha = (v - vi_left).normalize();
+            OpenMesh::Vec3f v0_alpha = (vi - vi_left);
+            OpenMesh::Vec3f v1_alpha = (v - vi_left);
 
-            MyMesh::Point v0_beta = (vi - vi_right).normalize();
-            MyMesh::Point v1_beta = (v - vi_right).normalize();
+            OpenMesh::Vec3f v0_beta = (vi - vi_right);
+            OpenMesh::Vec3f v1_beta = (v - vi_right);
 
-            MyMesh::Point vi_minus_v = (vi - v);
+            OpenMesh::Vec3f vi_minus_v = (vi - v);
 
             // compute Alpha & Beta angles
             // angle = acos( dot_product / product of norms )
@@ -377,12 +409,12 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
 
             // Sum part
             sum_cot = (cot_alpha + cot_beta);
-            delta += (sum_cot * vi_minus_v);
+            laplace_beltrami_operators[i] += (sum_cot * vi_minus_v);
 
             // Compute area
             // https://fr.wikipedia.org/wiki/Aire_d%27un_triangle
-            MyMesh::Point barycenter_l = ((vi_left + vi + v) / 3.0f).normalize();
-            MyMesh::Point barycenter_r = ((vi_right + vi + v) / 3.0f).normalize();
+            MyMesh::Point barycenter_l = ((vi_left + vi + v) / 3.0f);
+            MyMesh::Point barycenter_r = ((vi_right + vi + v) / 3.0f);
 
             area += triangle_area(barycenter_l, barycenter_r, v);
 
@@ -390,9 +422,18 @@ MeshObject::Laplace_Beltrami_operator(float h, float lambda)
             --cvv_ccwit;
         }
 
-        delta = 0.5f * area * delta; // 1/2 * Area * [Sum]
-        mesh.point(v_it) += (h * lambda * delta);
+        laplace_beltrami_operators[i++] /= (2.0f*area);
     }
+}
+
+void
+MeshObject::apply_Laplace_Beltrami(float h, float lambda)
+{
+    compute_Laplace_Beltrami_operators();
+
+    size_t i = 0;
+    for(auto& v: mesh.vertices())
+        mesh.point(v) += (h * lambda * laplace_beltrami_operators[i++]);
 }
 
 void

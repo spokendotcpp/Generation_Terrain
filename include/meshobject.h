@@ -14,6 +14,8 @@ private:
 
     MyMesh mesh;
 
+    MyMesh::Point* laplace_beltrami_operators;
+
     float* dihedral_angles;
     uint* valences;
 
@@ -21,6 +23,7 @@ private:
 
 private:
     void normalize();
+    void compute_Laplace_Beltrami_operators();
     std::vector<std::vector<MyMesh::VertexHandle>> find_gaps();
 
 public:
@@ -33,7 +36,7 @@ public:
     float mean_valence() const;
     float mean_dihedral() const;
 
-    void Laplace_Beltrami_operator(float h, float lambda);
+    void apply_Laplace_Beltrami(float h, float lambda);
 
     void update_valence_vertices();
     void update_dihedral_angles();
