@@ -24,7 +24,6 @@ find_package(
     Core
     Gui
     OpenGL
-    Charts
 )
 
 find_package(OpenGL REQUIRED)
@@ -52,7 +51,6 @@ set(SOURCES
     src/meshobject.cpp
     src/light.cpp
     src/arcball.cpp
-    src/histogram.cpp
 )
 
 # HEADERS FILES
@@ -64,7 +62,6 @@ set(HEADERS
     include/meshobject.h
     include/light.h
     include/arcball.h
-    include/histogram.h
 )
 
 set(UI_FORMS
@@ -95,7 +92,6 @@ target_link_libraries(
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
-    Qt5::Charts
 
     ${OPENGL_LIBRARIES}
 

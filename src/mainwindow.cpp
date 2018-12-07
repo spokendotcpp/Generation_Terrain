@@ -124,8 +124,6 @@ MainWindow::connect_signals_and_slots()
     {
         ui->viewer->apply_Laplace_Beltrami();
         ui->status->setText(ui->viewer->status_message());
-        Histogram* h = new Histogram(this, ui->viewer->get_mesh()->get_dihedral_angles());
-        h->show();
     });
 
     // QUIT APP

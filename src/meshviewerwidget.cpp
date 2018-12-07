@@ -162,7 +162,8 @@ MeshViewerWidget::initializeGL()
     glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDepthFunc(GL_LESS);
+    glPolygonMode(GL_FRONT, GL_FILL);
 
     default_ModelViewPosition();
 
@@ -213,17 +214,19 @@ MeshViewerWidget::paintGL()
             program->setUniformValue("model", obj->model_matrix());
             program->setUniformValue("model_inverse", obj->model_matrix().transposed().inverted());
 
+            if( fill_on )
+                obj->show(GL_TRIANGLES);
+
             if( wireframe_on ){
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 program->setUniformValue("wireframe_on", 1);
                 obj->show(GL_TRIANGLES);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glDepthFunc(GL_LESS);
                 program->setUniformValue("wireframe_on", 0);
             }
-
-            if( fill_on )
-                obj->show(GL_TRIANGLES);
         }
+
 
         // draw axis
         light->off(program);
@@ -364,9 +367,9 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         glGetIntegerv(GL_POLYGON_MODE, &mode);
 
         if( mode == GL_FILL )
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glPolygonMode(GL_FRONT, GL_LINE);
         else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glPolygonMode(GL_FRONT, GL_FILL);
 
         doneCurrent();
         break;

@@ -17,7 +17,6 @@
 #include <QMenuBar>
 #include <QPushButton>
 
-#include "histogram.h"
 #include "ui_mainwindow.h"
 
 class MainWindow : public QMainWindow
