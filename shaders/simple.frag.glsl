@@ -12,6 +12,8 @@ uniform bool light_on;
 uniform bool wireframe_on;
 uniform vec3 wireframe_color;
 
+uniform bool smooth_on;
+
 out vec4 color;
 
 void main()
@@ -21,7 +23,15 @@ void main()
             color = vec4(wireframe_color, 1.0f);
         }
         else {
-            vec3 n = normalize( vertex_normal );
+            vec3 n;
+            if( smooth_on )
+                n = normalize( vertex_normal );
+
+            // flat shading
+            // https://gamedev.stackexchange.com/questions/154854/how-do-i-implement-flat-shading-in-glsl
+            else
+                n = normalize(cross( dFdx(position_view), dFdy(position_view) ));
+
             vec3 l = normalize( light_direction );
 
             float cosTheta = max(dot(n, l), 0.0f);

@@ -199,6 +199,7 @@ MeshViewerWidget::paintGL()
     program->bind();
     {
         program->setUniformValue("smooth_on", smooth_on);
+
         // in case user has modified light pos
         light->to_gpu(program);
 

@@ -31,11 +31,6 @@ out vec3 light_direction;
 
 void main()
 {
-    // which normal user wants to use
-    vec3 normal = v_normal;
-    if( !smooth_on )
-        normal = f_normal;
-
     // vertex position into MVP space
     gl_Position = projection * view * model * vec4(position, 1.0f);
 
@@ -50,7 +45,8 @@ void main()
         light_direction = light_position_view - position_view;
 
         // vertex normal into view
-        vertex_normal = mat3(view_inverse * model_inverse) * normal;
+        if( smooth_on )
+            vertex_normal = mat3(view_inverse * model_inverse) * v_normal;
     }
 
     // send color to the fragment shader

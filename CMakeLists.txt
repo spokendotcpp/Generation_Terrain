@@ -24,25 +24,22 @@ find_package(
     Core
     Gui
     OpenGL
+    Charts
 )
 
 find_package(OpenGL REQUIRED)
 
 # FIND OPENMESH LIBRARIES
-find_library(OPENMESH_CORE
-    NAMES OpenMeshCore
-    PATHS libs/OpenMesh-7.1/lib
+find_library(
+    OPENMESH_CORE
+    NAMES libOpenMeshCore.so
+    HINTS "libs/OpenMesh-7.1/lib"
 )
 
-find_library(OPENMESH_TOOLS
-    NAMES OpenMeshTools
-    PATHS libs/OpenMesh-7.1/lib
-)
-
-# FIND QWT LIBRARY
-find_library(QWT_LIBRARY
-    NAMES qwt
-    PATHS libs/qwt-6.1.3/lib
+find_library(
+    OPENMESH_TOOLS
+    NAMES libOpenMeshTools.so
+    HINTS "libs/OpenMesh-7.1/lib"
 )
 
 # CPP SOURCES FILES
@@ -55,6 +52,7 @@ set(SOURCES
     src/meshobject.cpp
     src/light.cpp
     src/arcball.cpp
+    src/histogram.cpp
 )
 
 # HEADERS FILES
@@ -66,6 +64,7 @@ set(HEADERS
     include/meshobject.h
     include/light.h
     include/arcball.h
+    include/histogram.h
 )
 
 set(UI_FORMS
@@ -86,9 +85,6 @@ target_include_directories(
     ${exe_name} PUBLIC
     # OPENMESH HEADERS
     libs/OpenMesh-7.1/include
-
-    # QWT HEADERS
-    libs/qwt-6.1.3/include
 )
 
 # -l
@@ -99,8 +95,7 @@ target_link_libraries(
     Qt5::Core
     Qt5::Gui
     Qt5::OpenGL
-
-    ${QWT_LIBRARY}
+    Qt5::Charts
 
     ${OPENGL_LIBRARIES}
 

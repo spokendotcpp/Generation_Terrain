@@ -441,12 +441,12 @@
   </action>
   <action name="actionBy_vertices">
    <property name="text">
-    <string>By vertices</string>
+    <string>Active</string>
    </property>
   </action>
   <action name="actionBy_faces">
    <property name="text">
-    <string>By faces</string>
+    <string>Flat</string>
    </property>
   </action>
  </widget>

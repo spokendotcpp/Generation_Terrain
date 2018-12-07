@@ -205,6 +205,16 @@ MeshObject::update_dihedral_angles()
     }
 }
 
+std::vector<float>
+MeshObject::get_dihedral_angles() const
+{
+    std::vector<float> values;
+    for(size_t i=0; i < mesh.n_edges(); ++i)
+        values.push_back(dihedral_angles[i]);
+
+    return values;
+}
+
 const std::string&
 MeshObject::get_filename() const
 {
@@ -322,7 +332,6 @@ MeshObject::build(QOpenGLShaderProgram* program)
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), colors);
     set_vertices_normals(program->attributeLocation("v_normal"), v_normals);
-    set_faces_normals(program->attributeLocation("f_normal"), f_normals);
 
     return initialize(nb_vertices, nb_elements, 3);
 }

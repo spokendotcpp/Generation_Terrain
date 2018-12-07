@@ -2,8 +2,6 @@
 
 #include <QMessageBox>
 #include <QFileDialog>
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_histogram.h>
 
 MainWindow::MainWindow(QWidget *parent):
     QMainWindow(parent), ui(new Ui::MainWindow())
@@ -16,20 +14,6 @@ MainWindow::MainWindow(QWidget *parent):
     this->center();
 
     connect_signals_and_slots();
-
-    /*
-    QMainWindow* window = new QMainWindow(this);
-    QwtPlot* p = new QwtPlot(window);
-
-    QwtPlotHistogram histo;
-    histo.setTitle("Try");
-    histo.setAxes(10, 10);
-
-    histo.attach(p);
-    p->replot();
-
-    window->show();
-    */
 
     // start a Callback timer of (1s, 1000ms)
     startTimer(1000);
@@ -140,6 +124,8 @@ MainWindow::connect_signals_and_slots()
     {
         ui->viewer->apply_Laplace_Beltrami();
         ui->status->setText(ui->viewer->status_message());
+        Histogram* h = new Histogram(this, ui->viewer->get_mesh()->get_dihedral_angles());
+        h->show();
     });
 
     // QUIT APP

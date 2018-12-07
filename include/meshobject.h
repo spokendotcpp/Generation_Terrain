@@ -30,6 +30,7 @@ public:
     MeshObject(const std::string&);
     ~MeshObject() override;
 
+    std::vector<float> get_dihedral_angles() const;
     const std::string& get_filename() const;
     const size_t& nb_faces() const;
     const size_t& nb_vertices() const;
