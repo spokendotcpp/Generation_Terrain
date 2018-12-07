@@ -182,6 +182,68 @@ MeshObject::find_gaps()
     return gaps;
 }
 
+/* Raycasting intersection with a triangle */
+// http://iquilezles.org/www/articles/intersectors/intersectors.htm
+OpenMesh::Vec3f
+MeshObject::ray_intersect_triangle(
+        OpenMesh::Vec3f origin, OpenMesh::Vec3f direction,
+        OpenMesh::Vec3f p0, OpenMesh::Vec3f p1, OpenMesh::Vec3f p2)
+{
+    OpenMesh::Vec3f orp0 = origin - p0;
+    OpenMesh::Vec3f p1p0 = p1 - p0;
+    OpenMesh::Vec3f p2p0 = p2 - p0;
+
+    OpenMesh::Vec3f n = OpenMesh::cross(p1p0, p2p0);
+    OpenMesh::Vec3f q = OpenMesh::cross(orp0, direction);
+
+    float d = 1.0f / OpenMesh::dot( direction, n );
+    float u = d * OpenMesh::dot( -q, p2p0 );
+    float v = d * OpenMesh::dot(  q, p1p0 );
+    float t = d * OpenMesh::dot( -n, orp0 );
+
+    t = std::min(u, std::min(v, std::min(1.0f-(u+v), t)));
+
+    return OpenMesh::Vec3f(t, u, v);
+}
+
+/*
+ * Test raycasting intersection with every faces of the current mesh
+ * @ returns first face ID met (-1 if not found at all).
+ */
+int
+MeshObject::get_face_picked(OpenMesh::Vec3f origin, OpenMesh::Vec3f direction)
+{
+    for(const auto& f: mesh.faces()){
+        MyMesh::ConstFaceVertexIter cfv_it = mesh.cfv_iter(f);
+
+        OpenMesh::Vec3f p0 = mesh.point(*cfv_it);
+        OpenMesh::Vec3f p1 = mesh.point(*(++cfv_it));
+        OpenMesh::Vec3f p2 = mesh.point(*(++cfv_it));
+
+        OpenMesh::Vec3f inter = ray_intersect_triangle(origin, direction, p0, p1, p2);
+
+        if( inter[0] >= 0.0f )
+            return f.idx();
+    }
+
+    return -1;
+}
+
+std::vector<int>
+MeshObject::get_vertices_id_from_face(int face) const
+{
+    std::vector<int> ids{ -1, -1, -1  };
+
+    if( face >= 0 ){
+        MyMesh::ConstFaceVertexIter cfv_iter = mesh.cfv_iter(MyMesh::FaceHandle(face));
+        ids[0] = cfv_iter->idx();
+        ids[1] = (++cfv_iter)->idx();
+        ids[2] = (++cfv_iter)->idx();
+    }
+
+    return ids;
+}
+
 void
 MeshObject::update_valence_vertices()
 {   
@@ -274,11 +336,9 @@ MeshObject::build(QOpenGLShaderProgram* program)
     GLuint* indices = new GLuint[nb_elements];
     GLfloat* positions = new GLfloat[nb_vertices*3];
     GLfloat* v_normals = new GLfloat[nb_vertices*3];
-    GLfloat* f_normals = new GLfloat[nb_vertices*3];
     GLfloat* colors = new GLfloat[nb_vertices*3];
 
     MyMesh::Normal v_normal;
-    MyMesh::Normal f_normal;
     MyMesh::Point point;
     MyMesh::ConstFaceVertexIter cfv_it;
 
@@ -295,39 +355,14 @@ MeshObject::build(QOpenGLShaderProgram* program)
         }
     }
 
-    /*
-     *  table used to fill normal per faces.
-     *  one face -> 3 vertices
-     *  one face -> one normal <- 3 vertices
-     *
-     *  each vertices of a face have the same normal (the one from the face).
-     *  problem: multiple faces can have the same vertice.
-     *  fix: first time you met the vertice, put the flag to true (looked).
-     *  next face which will met the vertice won't touch its normal.
-     */
-    bool* looked = new bool[nb_vertices];
-    for(i=0; i < nb_vertices; ++i)
-        looked[i] = false;
-
     i = 0;
     for(const auto& cf_it: mesh.faces()){
         /* const face iterator */
         cfv_it = mesh.cfv_iter(cf_it);
-        f_normal = mesh.normal(cf_it);
         for(j=0; j < 3; ++j, ++i, ++cfv_it){
             indices[i] = GLuint(cfv_it->idx());
-
-            // fill the normal per faces datas
-            if( !looked[indices[i]] ){
-                f_normals[(indices[i]*3)+0] = f_normal[0];
-                f_normals[(indices[i]*3)+1] = f_normal[1];
-                f_normals[(indices[i]*3)+2] = f_normal[2];
-                looked[indices[i]] = true;
-            }
         }
     }
-
-    delete [] looked;
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
     set_vertices_colors(program->attributeLocation("color"), colors);

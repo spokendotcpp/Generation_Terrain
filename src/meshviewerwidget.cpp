@@ -95,7 +95,7 @@ void
 MeshViewerWidget::default_view()
 {
     rotation = QMatrix4x4();
-    rotation.rotate(25.0f, 1.0f, 1.0f, 0.0f);
+    rotation.rotate(0.0f, 1.0f, 1.0f, 0.0f);
 
     position = QVector3D(0.0f, 0.0f, -2.0f);
     update_view();
@@ -222,7 +222,6 @@ MeshViewerWidget::paintGL()
                 program->setUniformValue("wireframe_on", 1);
                 obj->show(GL_TRIANGLES);
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glDepthFunc(GL_LESS);
                 program->setUniformValue("wireframe_on", 0);
             }
         }
@@ -272,6 +271,48 @@ MeshViewerWidget::mousePressEvent(QMouseEvent* event)
     if( event->button() == Qt::MouseButton::LeftButton ){
         mouse_pressed = true;
         mouse = event->pos();
+
+        // Raycasting when user click (no boudings box for the moment).
+        // http://antongerdelan.net/opengl/raycasting.html
+        // https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/07_ray_picking/main.cpp#L37
+
+        // First, convert mouse coordinates (window -> world)
+        float x = (2.0f * mouse.x()) / width() - 1.0f;
+        float y = 1.0f - (2.0f * mouse.y()) / height();
+
+        QVector4D ray_clip(x, y, -1.0f, 1.0f);
+        QVector4D ray_eye = projection.inverted() * ray_clip;
+        ray_eye = QVector4D(ray_eye.x(), ray_eye.y(), -1.0f, 1.0f);
+        QVector4D ray_world = view.inverted() * ray_eye;
+        ray_world.normalize();
+
+        std::cerr << "World position: "
+                  << ray_world.x() << ", "
+                  << ray_world.y() << ", "
+                  << ray_world.z() << std::endl;
+
+        QVector3D cam_position = view.inverted() * position;
+        cam_position.normalize();
+
+        // Ray origin & direction
+        OpenMesh::Vec3f origin = OpenMesh::Vec3f(cam_position.x(), cam_position.y(), cam_position.z());
+        OpenMesh::Vec3f direction = OpenMesh::Vec3f(ray_world.x(), ray_world.y(), ray_world.z());
+
+        if( obj != nullptr ){
+            int id = obj->get_face_picked(origin, direction);
+            std::cerr << "Face ID: " << id << std::endl;
+            std::vector<int> vertices_id = obj->get_vertices_id_from_face(id);
+
+            makeCurrent();
+
+            program->bind();
+            program->setUniformValue("face_vertices_id", QVector3D(vertices_id[0], vertices_id[1], vertices_id[2]));
+            program->release();
+
+            doneCurrent();
+
+            update();
+        }
     }
     else
     if( event->button() == Qt::MouseButton::MiddleButton ){
@@ -367,9 +408,9 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         glGetIntegerv(GL_POLYGON_MODE, &mode);
 
         if( mode == GL_FILL )
-            glPolygonMode(GL_FRONT, GL_LINE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
-            glPolygonMode(GL_FRONT, GL_FILL);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         doneCurrent();
         break;

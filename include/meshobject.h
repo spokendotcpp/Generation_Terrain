@@ -39,6 +39,13 @@ public:
 
     void apply_Laplace_Beltrami(float h, float lambda);
 
+    static OpenMesh::Vec3f ray_intersect_triangle(
+            OpenMesh::Vec3f origin, OpenMesh::Vec3f direction,
+            OpenMesh::Vec3f p0, OpenMesh::Vec3f p1, OpenMesh::Vec3f p2);
+
+    int get_face_picked(OpenMesh::Vec3f origin, OpenMesh::Vec3f direction);
+    std::vector<int> get_vertices_id_from_face(int face_id) const;
+
     void update_valence_vertices();
     void update_dihedral_angles();
     void update_normals();

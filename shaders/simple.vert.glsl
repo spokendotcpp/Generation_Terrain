@@ -23,6 +23,8 @@ uniform vec3 wireframe_color;
 
 uniform bool smooth_on;
 
+uniform vec3 face_vertices_id;
+
 // To Fragment Shader
 out vec3 fragment_color;
 out vec3 vertex_normal;
@@ -50,5 +52,12 @@ void main()
     }
 
     // send color to the fragment shader
-    fragment_color = color;
+    // Don't light up picked face
+    if( gl_VertexID == face_vertices_id.x ||
+        gl_VertexID == face_vertices_id.y ||
+        gl_VertexID == face_vertices_id.z ){
+            fragment_color = vec3(0.0f, 0.0f, 0.0f);
+    }
+    else
+        fragment_color = color;
 }
