@@ -18,11 +18,11 @@ out vec4 color;
 
 void main()
 {
-    if( light_on ){
-        if( wireframe_on ){
-            color = vec4(wireframe_color, 1.0f);
-        }
-        else {
+    if( wireframe_on ){
+        color = vec4(wireframe_color, 1.0f);
+    }
+    else {
+        if( light_on ){
             vec3 n;
             if( smooth_on )
                 n = normalize( vertex_normal );
@@ -47,8 +47,8 @@ void main()
 
             color = vec4((ambient + diffuse + specular) * fragment_color, 1.0f);
         }
-    }
-    else {
-        color = vec4(fragment_color, 1.0f);
+        else {
+            color = vec4(fragment_color, 1.0f);
+        }
     }
 }

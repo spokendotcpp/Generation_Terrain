@@ -1,7 +1,6 @@
 #include "../include/arcball.h"
 
 #include <cmath>
-#include <QtMath>
 #include <iostream>
 
 ArcBall::ArcBall(int w, int h):

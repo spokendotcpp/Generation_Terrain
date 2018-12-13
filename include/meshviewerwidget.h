@@ -23,6 +23,7 @@
 #include "axis.h"
 #include "light.h"
 #include "arcball.h"
+#include "field.h"
 
 typedef std::chrono::steady_clock Clock;
 
@@ -65,6 +66,7 @@ private:
     Light* light;
     ArcBall* arcball;
     Axis* axis;
+    Field* field;
 
     // DISPLAY METHODS
     bool wireframe_on;

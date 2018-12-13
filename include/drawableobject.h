@@ -7,16 +7,6 @@
 
 #include <QMatrix4x4>
 
-#include <OpenMesh/Core/IO/MeshIO.hh>
-#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
-
-struct MyTraits : public OpenMesh::DefaultTraits {
-    HalfedgeAttributes(OpenMesh::Attributes::PrevHalfedge);
-};
-
-typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
-
-
 class DrawableObject {
 private:
     size_t nb_vertices; // Number of vertices into our Object

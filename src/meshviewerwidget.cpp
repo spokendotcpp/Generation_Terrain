@@ -21,10 +21,12 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     frames = 0;
     lap = Clock::now();
 
-    arcball = nullptr;
     program = nullptr;
+
+    arcball = nullptr;
     light = nullptr;
     axis = nullptr;
+    field = nullptr;
 }
 
 /*
@@ -54,6 +56,11 @@ MeshViewerWidget::~MeshViewerWidget()
     if( axis != nullptr ){
         delete axis;
         axis = nullptr;
+    }
+
+    if( field != nullptr ){
+        delete field;
+        field = nullptr;
     }
 }
 
@@ -88,7 +95,7 @@ void
 MeshViewerWidget::default_view()
 {
     rotation = QMatrix4x4();
-    rotation.rotate(0.0f, 1.0f, 1.0f, 0.0f);
+    rotation.rotate(0.0f, 1.0f, 1.0f, 1.0f);
 
     position = QVector3D(0.0f, 0.0f, -2.0f);
     update_view();
@@ -128,10 +135,11 @@ MeshViewerWidget::initializeGL()
         return;
     }
 
-    arcball = new ArcBall(size().width(), size().height());
+    arcball = new ArcBall(width(), height());
 
     // Create Object(s) :
     axis = new Axis();
+    field = new Field(5);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -147,6 +155,9 @@ MeshViewerWidget::initializeGL()
 
         axis->build(program);
         axis->update_buffers(program);
+
+        field->build(program);
+        //field->update_buffers(program);
 
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
     }
@@ -200,6 +211,10 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("projection", projection);
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
+
+        program->setUniformValue("model", field->model_matrix());
+        program->setUniformValue("model_inverse", field->model_matrix().transposed().inverted());
+        field->show(GL_TRIANGLES);
 
         // draw axis
         light->off(program);
