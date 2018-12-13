@@ -209,6 +209,12 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
+        // draw axis
+        light->off(program);
+        program->setUniformValue("model", axis->model_matrix());
+        axis->show(GL_LINES);
+        light->on(program);
+
         // draw obj
         if( obj != nullptr ){
             program->setUniformValue("model", obj->model_matrix());
@@ -225,13 +231,6 @@ MeshViewerWidget::paintGL()
                 program->setUniformValue("wireframe_on", 0);
             }
         }
-
-
-        // draw axis
-        light->off(program);
-        program->setUniformValue("model", axis->model_matrix());
-        axis->show(GL_LINES);
-        light->on(program);
     }
     program->release();
 }
@@ -265,6 +264,21 @@ MeshViewerWidget::mouseMoveEvent(QMouseEvent* event)
     mouse = pos;
 }
 
+/*
+ */
+QVector3D
+MeshViewerWidget::unproject(const QVector3D& screen)
+{
+    float x = (2.0f * screen.x()) / width() - 1.0f;
+    float y = 1.0f - (2.0f * screen.y()) / height();
+
+    QVector4D pos(x, y, (screen.z() * 2.0f) - 1.0f, 1.0f);
+    QVector4D VP_pos = (projection * view).inverted() * pos;
+
+    return VP_pos.toVector3D()/VP_pos.w();
+}
+
+
 void
 MeshViewerWidget::mousePressEvent(QMouseEvent* event)
 {
@@ -272,31 +286,14 @@ MeshViewerWidget::mousePressEvent(QMouseEvent* event)
         mouse_pressed = true;
         mouse = event->pos();
 
-        // Raycasting when user click (no boudings box for the moment).
-        // http://antongerdelan.net/opengl/raycasting.html
-        // https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/07_ray_picking/main.cpp#L37
+        QVector3D near = QVector3D(mouse.x(), mouse.y(), 0).unproject(view, projection, QRect(0, 0, width(), height()));
+        QVector3D far = QVector3D(mouse.x(), mouse.y(), 1).unproject(view, projection, QRect(0, 0, width(), height()));
 
-        // First, convert mouse coordinates (window -> world)
-        float x = (2.0f * mouse.x()) / width() - 1.0f;
-        float y = 1.0f - (2.0f * mouse.y()) / height();
-
-        QVector4D ray_clip(x, y, -1.0f, 1.0f);
-        QVector4D ray_eye = projection.inverted() * ray_clip;
-        ray_eye = QVector4D(ray_eye.x(), ray_eye.y(), -1.0f, 1.0f);
-        QVector4D ray_world = view.inverted() * ray_eye;
-        ray_world.normalize();
-
-        std::cerr << "World position: "
-                  << ray_world.x() << ", "
-                  << ray_world.y() << ", "
-                  << ray_world.z() << std::endl;
-
-        QVector3D cam_position = view.inverted() * position;
-        cam_position.normalize();
+        QVector3D ray_direction = (far - near).normalized();
 
         // Ray origin & direction
-        OpenMesh::Vec3f origin = OpenMesh::Vec3f(cam_position.x(), cam_position.y(), cam_position.z());
-        OpenMesh::Vec3f direction = OpenMesh::Vec3f(ray_world.x(), ray_world.y(), ray_world.z());
+        OpenMesh::Vec3f origin( near.x(), near.y(), near.z() );
+        OpenMesh::Vec3f direction( ray_direction.x(), -ray_direction.y(), ray_direction.z() );
 
         if( obj != nullptr ){
             int id = obj->get_face_picked(origin, direction);

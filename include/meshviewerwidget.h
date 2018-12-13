@@ -114,6 +114,8 @@ public:
 
     inline MeshObject* get_mesh(){ return obj; }
 
+    QVector3D unproject(const QVector3D& screen);
+
     // SLOTS
 public slots:
     /* Load an *.obj file from filesystem */
