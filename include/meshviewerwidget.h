@@ -21,7 +21,6 @@
 #include <QInputDialog>
 
 #include "axis.h"
-#include "meshobject.h"
 #include "light.h"
 #include "arcball.h"
 
@@ -43,30 +42,31 @@ private:
     QMatrix4x4 view;
     QMatrix4x4 projection;
 
-    // FPS frequency as microseconds
-    long frequency;
+    // FPS related
     Clock::time_point lap;
+    long frequency;
+    size_t frames;
+    int timer_id_0;
 
+    // Mouse related
     bool mouse_pressed;
     bool wheel_pressed;
     QPoint mouse;
     QVector3D position;
     QMatrix4x4 rotation;
 
+    // Viewport related
     float fov;
     float zNear;
     float zFar;
     float window_ratio;
 
-    size_t frames;
-
-    int timer_id_0;
-
-    ArcBall* arcball;
-    MeshObject* obj;
+    // User objects into our scene
     Light* light;
+    ArcBall* arcball;
     Axis* axis;
 
+    // DISPLAY METHODS
     bool wireframe_on;
     bool fill_on;
     bool smooth_on;
@@ -76,6 +76,7 @@ public:
     MeshViewerWidget(QWidget *parent=nullptr);
     ~MeshViewerWidget() override;
 
+    /* *********************************************** */
     /* Qt OpenGL override functions */
     void initializeGL() override;
     void resizeGL(int width, int height) override;
@@ -93,6 +94,8 @@ public:
     /* Wheel */
     void wheelEvent(QWheelEvent*) override;
 
+    /* *********************************************** */
+    /* User defined methods */
     /* Since we don't want our QMainWindow to lose Focus,
      * we handle key events with our own function.
      * See mainwindow.cpp > keyPressEvent method.
@@ -101,31 +104,30 @@ public:
 
     /* caps frames per second */
     void set_frames_per_second(size_t fps);
+
+    /* Number of frames drawn during the last second */
     size_t get_computed_frames() const;
+
+    /* Reset counter */
     void reset_computed_frames();
 
+    /* Flat or Smooth render */
     void smooth_render(bool on);
 
-    /* Difference between two high resolution clock time point as microseconds */
-    static long microseconds_diff(
-            Clock::time_point t1,
-            Clock::time_point t2
-    );
+    /* Display using GL_LINES PolygonMode */
+    void display_wireframe(bool mode);
 
-    inline MeshObject* get_mesh(){ return obj; }
+    /* Display using GL_FILL PolygonMode */
+    void display_fill(bool mode);
 
-    // SLOTS
-public slots:
-    /* Load an *.obj file from filesystem */
-    void get_obj_from_filesystem(const std::string& filename);
-
-    void display_wireframe(bool on);
-    void display_fill(bool on);
+    /* Reset view matrix to default */
     void reset_view();
-    void set_scale_factor(float factor);
-    void set_light_position(int x, int y, int z);
-    QString status_message();
-    void apply_Laplace_Beltrami();
+
+    /* *********************************************** */
+    /* STATIC METHODS */
+    /* Difference between two high resolution clock time point as microseconds */
+    static
+    long microseconds_diff(Clock::time_point t1, Clock::time_point t2);
 
 /* Private methods */
 private:

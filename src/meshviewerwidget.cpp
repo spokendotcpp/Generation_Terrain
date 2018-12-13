@@ -19,12 +19,10 @@ MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     smooth_on = true;
 
     frames = 0;
-    set_frames_per_second(60);
     lap = Clock::now();
 
     arcball = nullptr;
     program = nullptr;
-    obj = nullptr;
     light = nullptr;
     axis = nullptr;
 }
@@ -56,11 +54,6 @@ MeshViewerWidget::~MeshViewerWidget()
     if( axis != nullptr ){
         delete axis;
         axis = nullptr;
-    }
-
-    if( obj != nullptr ){
-        delete obj;
-        obj = nullptr;
     }
 }
 
@@ -186,11 +179,11 @@ MeshViewerWidget::resizeGL(int width, int height)
 void
 MeshViewerWidget::paintGL()
 {
-    long mcs = microseconds_diff(Clock::now(), lap);
+    long mcs = MeshViewerWidget::microseconds_diff(Clock::now(), lap);
 
     if( mcs < frequency ){
         std::this_thread::sleep_for(
-            std::chrono::microseconds((frequency-100) - mcs)
+            std::chrono::microseconds(frequency - mcs)
         );
     }
 
@@ -204,28 +197,9 @@ MeshViewerWidget::paintGL()
         // in case user has modified light pos
         light->to_gpu(program);
 
-        // TODO: DrawableObject method to compute directly transposed(inverted) matrix once.
         program->setUniformValue("projection", projection);
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
-
-        // draw obj
-        if( obj != nullptr ){
-            program->setUniformValue("model", obj->model_matrix());
-            program->setUniformValue("model_inverse", obj->model_matrix().transposed().inverted());
-
-            if( fill_on )
-                obj->show(GL_TRIANGLES);
-
-            if( wireframe_on ){
-                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                program->setUniformValue("wireframe_on", 1);
-                obj->show(GL_TRIANGLES);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                program->setUniformValue("wireframe_on", 0);
-            }
-        }
-
 
         // draw axis
         light->off(program);
@@ -271,48 +245,6 @@ MeshViewerWidget::mousePressEvent(QMouseEvent* event)
     if( event->button() == Qt::MouseButton::LeftButton ){
         mouse_pressed = true;
         mouse = event->pos();
-
-        // Raycasting when user click (no boudings box for the moment).
-        // http://antongerdelan.net/opengl/raycasting.html
-        // https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/07_ray_picking/main.cpp#L37
-
-        // First, convert mouse coordinates (window -> world)
-        float x = (2.0f * mouse.x()) / width() - 1.0f;
-        float y = 1.0f - (2.0f * mouse.y()) / height();
-
-        QVector4D ray_clip(x, y, -1.0f, 1.0f);
-        QVector4D ray_eye = projection.inverted() * ray_clip;
-        ray_eye = QVector4D(ray_eye.x(), ray_eye.y(), -1.0f, 1.0f);
-        QVector4D ray_world = view.inverted() * ray_eye;
-        ray_world.normalize();
-
-        std::cerr << "World position: "
-                  << ray_world.x() << ", "
-                  << ray_world.y() << ", "
-                  << ray_world.z() << std::endl;
-
-        QVector3D cam_position = view.inverted() * position;
-        cam_position.normalize();
-
-        // Ray origin & direction
-        OpenMesh::Vec3f origin = OpenMesh::Vec3f(cam_position.x(), cam_position.y(), cam_position.z());
-        OpenMesh::Vec3f direction = OpenMesh::Vec3f(ray_world.x(), ray_world.y(), ray_world.z());
-
-        if( obj != nullptr ){
-            int id = obj->get_face_picked(origin, direction);
-            std::cerr << "Face ID: " << id << std::endl;
-            std::vector<int> vertices_id = obj->get_vertices_id_from_face(id);
-
-            makeCurrent();
-
-            program->bind();
-            program->setUniformValue("face_vertices_id", QVector3D(vertices_id[0], vertices_id[1], vertices_id[2]));
-            program->release();
-
-            doneCurrent();
-
-            update();
-        }
     }
     else
     if( event->button() == Qt::MouseButton::MiddleButton ){
@@ -461,31 +393,6 @@ MeshViewerWidget::microseconds_diff(
 }
 
 void
-MeshViewerWidget::get_obj_from_filesystem(const std::string& filename)
-{
-    MeshObject* new_obj = new MeshObject(filename);
-    if( new_obj != nullptr ){
-        if( obj != nullptr ){
-            delete obj;
-            obj = nullptr;
-        }
-
-        makeCurrent();
-        program->bind();
-        {
-           new_obj->build(program);
-           new_obj->use_unique_color(0.0f, 1.0f, 1.0f);
-           new_obj->update_buffers(program);
-           obj = new_obj;
-        }
-        program->release();
-        doneCurrent();
-    }
-    else
-        std::cerr << "Failed to load mesh file." << std::endl;
-}
-
-void
 MeshViewerWidget::display_wireframe(bool mode)
 {
     wireframe_on = mode;
@@ -505,71 +412,4 @@ MeshViewerWidget::reset_view()
     default_view();
     update_view();
     update();
-}
-
-void
-MeshViewerWidget::set_scale_factor(float factor)
-{
-    if( obj != nullptr ){
-        obj->reset_model_matrix();
-        obj->scale(factor, factor, factor);
-        update();
-    }
-}
-
-void
-MeshViewerWidget::set_light_position(int x, int y, int z)
-{
-    if( light != nullptr ){
-        if( program != nullptr ){
-            makeCurrent();
-            program->bind();
-            light->update_position(float(x), float(y), float(z))->to_gpu(program);
-            program->release();
-            doneCurrent();
-        }
-    }
-}
-
-QString
-MeshViewerWidget::status_message()
-{
-    QString msg;
-    if( obj != nullptr ){
-        msg.append("Filename: ");
-        msg.append(QString::fromStdString(obj->get_filename()));
-        msg.append(" | Vertices: ");
-        msg.append(QString::number(obj->nb_vertices()));
-        msg.append(" | Faces: ");
-        msg.append(QString::number(obj->nb_faces()));
-        msg.append(" | Mean valence: ");
-        msg.append(QString::number(double(obj->mean_valence())));
-        msg.append(" | Mean dihedral angle: ");
-        msg.append(QString::number(qRadiansToDegrees(double(obj->mean_dihedral()))));
-    }
-    return msg;
-}
-
-void
-MeshViewerWidget::apply_Laplace_Beltrami()
-{
-    int r = QInputDialog::getInt(this, "Laplace-Beltrami", "number of iterations:", 1);
-    if( r < 0 )
-        r = 0;
-
-    for(int i=0; i < r; ++i){
-        obj->apply_Laplace_Beltrami(1.0f, 0.00009f);
-    }
-
-    makeCurrent();
-    program->bind();
-    {
-        obj->update_normals();
-        obj->update_dihedral_angles();
-        obj->build(program);
-        obj->use_unique_color(0.0f, 1.0f, 1.0f);
-        obj->update_buffers(program);
-    }
-    program->release();
-    doneCurrent();
 }

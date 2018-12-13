@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>shaders/simple.vert.glsl</file>
-        <file>shaders/simple.frag.glsl</file>
-        <file>include/mainwindow.ui</file>
-    </qresource>
-</RCC>

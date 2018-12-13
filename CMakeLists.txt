@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(Viewer3D)
-set(exe_name "viewer")
+project(Generation_Terrain)
+set(exe_name "fields")
 
 # Find includes in corresponding build directories
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -28,19 +28,6 @@ find_package(
 
 find_package(OpenGL REQUIRED)
 
-# FIND OPENMESH LIBRARIES
-find_library(
-    OPENMESH_CORE
-    NAMES libOpenMeshCore.so
-    HINTS "libs/OpenMesh-7.1/lib"
-)
-
-find_library(
-    OPENMESH_TOOLS
-    NAMES libOpenMeshTools.so
-    HINTS "libs/OpenMesh-7.1/lib"
-)
-
 # CPP SOURCES FILES
 set(SOURCES
     src/main.cpp
@@ -48,7 +35,6 @@ set(SOURCES
     src/meshviewerwidget.cpp
     src/drawableobject.cpp
     src/axis.cpp
-    src/meshobject.cpp
     src/light.cpp
     src/arcball.cpp
 )
@@ -59,7 +45,6 @@ set(HEADERS
     include/meshviewerwidget.h
     include/drawableobject.h
     include/axis.h
-    include/meshobject.h
     include/light.h
     include/arcball.h
 )
@@ -74,14 +59,6 @@ add_executable(
     ${SOURCES}
     ${HEADERS}
     ${UI_FORMS}
-    collections.qrc
-)
-
-# -I
-target_include_directories(
-    ${exe_name} PUBLIC
-    # OPENMESH HEADERS
-    libs/OpenMesh-7.1/include
 )
 
 # -l
@@ -94,7 +71,4 @@ target_link_libraries(
     Qt5::OpenGL
 
     ${OPENGL_LIBRARIES}
-
-    ${OPENMESH_CORE}
-    ${OPENMESH_TOOLS}
 )
