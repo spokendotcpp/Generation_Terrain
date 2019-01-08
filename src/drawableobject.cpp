@@ -94,9 +94,13 @@ DrawableObject::update_buffers(QOpenGLShaderProgram* program)
 
 
 void
-DrawableObject::show(GLenum mode) const
+DrawableObject::show(QOpenGLShaderProgram* program, GLenum mode) const
 {
     if( initialized ){
+        // Update uniform values into vertex shader
+        program->setUniformValue("model", *model); // shader transformation computation
+        program->setUniformValue("model_inverse", model->transposed().inverted()); // shader light computation
+
         vao->bind();
         glDrawElements(mode, GLsizei(nb_elements), GL_UNSIGNED_INT, nullptr);
         vao->release();

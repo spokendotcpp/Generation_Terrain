@@ -157,7 +157,7 @@ MeshViewerWidget::initializeGL()
         axis->update_buffers(program);
 
         field->build(program);
-        //field->update_buffers(program);
+        field->update_buffers(program);
 
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
     }
@@ -212,14 +212,11 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
-        program->setUniformValue("model", field->model_matrix());
-        program->setUniformValue("model_inverse", field->model_matrix().transposed().inverted());
-        field->show(GL_TRIANGLES);
+        field->show(program, GL_TRIANGLES);
 
         // draw axis
         light->off(program);
-        program->setUniformValue("model", axis->model_matrix());
-        axis->show(GL_LINES);
+        axis->show(program, GL_LINES);
         light->on(program);
     }
     program->release();

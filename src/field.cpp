@@ -106,10 +106,7 @@ Field::diamond_square()
                     ++n;
                 }
 
-                int deno = n + random_number(engine);
-                if( deno != 0 ){
-                    map[j][i] = mean / deno;
-                }
+                map[j][i] = (mean/n) + random_number(engine);
             }
         }
 

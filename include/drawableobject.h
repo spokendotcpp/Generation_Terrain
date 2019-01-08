@@ -44,7 +44,7 @@ public:
 
     virtual bool build(QOpenGLShaderProgram* program) =0;
     bool update_buffers(QOpenGLShaderProgram* program);
-    virtual void show(GLenum mode) const;
+    virtual void show(QOpenGLShaderProgram* program, GLenum mode) const;
 
     void translate(float x, float y, float z);
     void scale(float x, float y, float z);
