@@ -8,7 +8,7 @@ class Field: public DrawableObject {
 // Attributes
 private:
     size_t length;
-    uchar** map;
+    int** map;
 
 // Public methods
 public:

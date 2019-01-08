@@ -139,7 +139,7 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    field = new Field(5);
+    field = new Field(15);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");

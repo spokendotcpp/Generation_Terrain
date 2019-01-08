@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     QSurfaceFormat format;
-    format.setSwapInterval(0);
+    format.setSwapInterval(0); // disable v-sync
     format.setSwapBehavior(QSurfaceFormat::SwapBehavior::TripleBuffer);
     format.setVersion(3, 0);
     format.setProfile(QSurfaceFormat::CoreProfile);

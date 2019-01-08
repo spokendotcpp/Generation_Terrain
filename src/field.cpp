@@ -1,4 +1,5 @@
 #include "../include/field.h"
+#include <iostream>
 
 Field::Field(size_t l)
     :length(l), map(nullptr)
@@ -6,9 +7,9 @@ Field::Field(size_t l)
     if( length%2 == 0 )
         ++length;
 
-    map = new uchar* [length];
+    map = new int* [length];
     for(size_t i=0; i < length; ++i){
-        map[i] = new uchar[length];
+        map[i] = new int[length];
         for(size_t j=0; j < length; ++j)
             map[i][j] = 0;
     }
@@ -19,7 +20,7 @@ Field::~Field()
     if( map != nullptr ){
         for(size_t i=0; i < length; ++i){
             delete [] map[i];
-                map[i] = nullptr;
+            map[i] = nullptr;
         }
         delete [] map;
         map = nullptr;
@@ -33,73 +34,88 @@ Field::diamond_square()
         return;
 
     std::random_device random_device;
-    std::default_random_engine random_engine(random_device());
-    std::uniform_int_distribution<uchar> corner{0, 255};
+    std::mt19937 engine { random_device() };
+    std::uniform_int_distribution<int> random_number(-int(length), int(length));
 
-    map[0][0]               = corner(random_engine);
-    map[0][length-1]        = corner(random_engine);
-    map[length-1][0]        = corner(random_engine);
-    map[length-1][length-1] = corner(random_engine);
+    // Init first 4 corners
+    map[0][0]               = random_number(engine);
+    map[0][length-1]        = random_number(engine);
+    map[length-1][0]        = random_number(engine);
+    map[length-1][length-1] = random_number(engine);
 
-    size_t i = length-1;
+    size_t step = length-1;
+    while( step > 1 ){
+        size_t half = step/2;
 
-    while( i > 1 ){
-        size_t half = i/2;
+        // Modify the random range (make it smaller)
+        random_number.param(
+            std::uniform_int_distribution<>::param_type(-int(half), int(half))
+        );
 
-        for(size_t x=half; x < length; x+=i){
-            for(size_t y=half; y < length; y+=i){
+        // Diamond phase
+        for(size_t j=half; j < length; j+=step){
+            for(size_t i=half; i < length; i+=step){
 
-                uchar mean = (
-                    map[x-half][y-half]
-                  + map[x-half][y+half]
-                  + map[x+half][y+half]
-                  + map[x+half][y-half]
-                )/4;
+                // Compute the current value of the map (j, i)
+                // mean of neighbours + random value
+                int mean = (
+                    map[j-half][i-half] // top-left
+                  + map[j-half][i+half] // top-right
+                  + map[j+half][i-half] // bot-left
+                  + map[j+half][i+half] // bot-right
+                );
 
-                map[x][y] = mean + corner(random_engine);
+                map[j][i] = mean + random_number(engine);
             }
         }
 
+        // Square phase
         size_t offset = 0;
-        for(size_t x=0; x < length; x+=half){
+        for(size_t j=0; j < length; j+=half){
+
+            // Departure of our row
             if( offset == 0 )
                 offset = half;
             else
                 offset = 0;
 
-            for(size_t y=offset; y < length; y+=half){
-                uchar mean = 0;
-                size_t n = 0;
+            for(size_t i=offset; i < length; i+=step){
+                int mean = 0;
+                int n = 0;
 
-                if( x >= half ){
-                    mean += map[x - half][y];
+                // edge test to ensure
+                // we stay into the range of map[][].
+
+                if( i >= half ){
+                    mean += map[j][i-half];
                     ++n;
                 }
 
-                if( x + half < length ){
-                    mean += map[x + half][y];
+                if( i + half < length ){
+                    mean += map[j][i+half];
                     ++n;
                 }
 
-                if( y >= half ){
-                    mean += map[x][y-half];
+                if( j >= half ){
+                    mean += map[j-half][i];
                     ++n;
                 }
 
-                if( y + half < length ){
-                    mean += map[x][y+half];
+                if( j + half < length ){
+                    mean += map[j+half][i];
                     ++n;
                 }
 
-                map[x][y] = mean / (n + corner(random_engine));
+                int deno = n + random_number(engine);
+                if( deno != 0 ){
+                    map[j][i] = mean / deno;
+                }
             }
         }
 
-        i = half;
+        step = half;
     }
 }
-
-#include <iostream>
 
 bool
 Field::build(QOpenGLShaderProgram* program)
