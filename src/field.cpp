@@ -63,7 +63,7 @@ Field::diamond_square()
                   + map[j-half][i+half] // top-right
                   + map[j+half][i-half] // bot-left
                   + map[j+half][i+half] // bot-right
-                );
+                ) / 4;
 
                 map[j][i] = mean + random_number(engine);
             }
@@ -119,12 +119,84 @@ Field::build(QOpenGLShaderProgram* program)
 {
     diamond_square();
 
-    for(size_t i=0; i < length; ++i){
-        for(size_t j=0; j < length; ++j){
-            std::cerr << int(map[i][j]) << ", ";
+    MyMesh mesh;
+    mesh.request_face_normals();
+    mesh.request_vertex_normals();
+
+    size_t nb_vertices = length * length;
+    GLfloat* positions = new GLfloat[nb_vertices*3];
+
+    // Square mesh = (n-1)² squares
+    // Triangle mesh = (n-1)² * 2
+    // One triangle has 3 indices
+    // R = (n-1)² * 2 * 3
+    size_t nb_indices = (((length-1) * (length-1)) * 2) * 3;
+    size_t it = 0;
+    GLuint* indices = new GLuint[nb_indices];
+
+    // TODO
+    // let user choose size of field
+    // nb of segments (current length)
+    // ...
+    float x = -(length*0.1f);
+    float z = x;
+
+    for(size_t j=0; j < length; ++j){
+        for(size_t i=0; i < length; ++i){
+            size_t idx = (j*length + i);
+            positions[(idx*3)+0] = x;
+            positions[(idx*3)+1] = float(map[j][i]) * 0.05f; // TODO
+            positions[(idx*3)+2] = z;
+            x += 0.2f;
+
+            mesh.add_vertex(
+                MyMesh::Point(
+                    positions[(idx*3)+0],
+                    positions[(idx*3)+1],
+                    positions[(idx*3)+2])
+            );
+
+            if( j < length-1 && i < length-1 ){
+                indices[it++] = GLuint(idx);
+                indices[it++] = GLuint(idx+length);
+                indices[it++] = GLuint(idx+1);
+
+                indices[it++] = GLuint(idx+length);
+                indices[it++] = GLuint(idx+length+1);
+                indices[it++] = GLuint(idx+1);
+            }
         }
-        std::cerr << std::endl;
+        z += 0.2f;
+        x = -(length*0.1f);
     }
 
-    return true;
+    for(size_t i=0; i < nb_indices; i+=3){
+        mesh.add_face(
+            MyMesh::VertexHandle(int(indices[i+0])),
+            MyMesh::VertexHandle(int(indices[i+1])),
+            MyMesh::VertexHandle(int(indices[i+2]))
+        );
+    }
+
+    // compute normals
+    mesh.update_face_normals();
+    mesh.update_vertex_normals();
+
+    GLfloat* normals = new GLfloat[nb_vertices*3];
+    size_t i = 0;
+    for(const auto& v: mesh.vertices()){
+        MyMesh::Normal n = mesh.normal(v);
+        for(size_t j = 0; j < 3; ++j, ++i){
+            normals[i] = n[j];
+        }
+    }
+
+    mesh.release_vertex_normals();
+    mesh.release_face_normals();
+
+    set_vertices_geometry(program->attributeLocation("position"), positions, indices);
+    set_vertices_colors(program->attributeLocation("color"), new GLfloat[nb_vertices*3]);
+    set_vertices_normals(program->attributeLocation("normal"), normals);
+
+    return initialize(nb_vertices, nb_indices, 3);
 }

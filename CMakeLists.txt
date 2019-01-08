@@ -28,6 +28,19 @@ find_package(
 
 find_package(OpenGL REQUIRED)
 
+# FIND OPENMESH LIBRARIES
+find_library(
+    LIB_OPENMESH_CORE
+    NAMES libOpenMeshCore.so
+    HINTS "libs/OpenMesh-7.1/lib"
+)
+
+find_library(
+    LIB_OPENMESH_TOOLS
+    NAMES libOpenMeshTools.so
+    HINTS "libs/OpenMesh-7.1/lib"
+)
+
 # CPP SOURCES FILES
 set(SOURCES
     src/main.cpp
@@ -63,6 +76,13 @@ add_executable(
     ${UI_FORMS}
 )
 
+# -I
+target_include_directories(
+    ${exe_name} PUBLIC
+    # OPENMESH HEADERS
+    libs/OpenMesh-7.1/include
+)
+
 # -l
 target_link_libraries(
     ${exe_name} PUBLIC
@@ -73,4 +93,6 @@ target_link_libraries(
     Qt5::OpenGL
 
     ${OPENGL_LIBRARIES}
+    ${LIB_OPENMESH_CORE}
+    ${LIB_OPENMESH_TOOLS}
 )

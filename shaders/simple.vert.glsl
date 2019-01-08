@@ -3,8 +3,7 @@
 // Get it via Buffer Object
 in vec3 position;
 in vec3 color;
-in vec3 v_normal;
-in vec3 f_normal;
+in vec3 normal;
 
 // Not via Buffer Object
 uniform mat4 model;
@@ -47,7 +46,7 @@ void main()
 
             // vertex normal into view
             if( smooth_on )
-                vertex_normal = mat3(view_inverse * model_inverse) * v_normal;
+                vertex_normal = mat3(view_inverse * model_inverse) * normal;
         }
 
         fragment_color = color;

@@ -59,4 +59,6 @@ MainWindow::connect_signals_and_slots()
 {
     // QUIT APP
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
+    connect(ui->action_flat, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(false); });
+    connect(ui->action_smooth, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(true); });
 }

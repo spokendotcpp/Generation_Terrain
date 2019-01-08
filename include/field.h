@@ -2,6 +2,18 @@
 #define FIELD_H
 
 #include <random>
+
+/* OpenMesh includes */
+#include <OpenMesh/Core/IO/MeshIO.hh>
+#include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
+
+struct MyTraits : public OpenMesh::DefaultTraits {
+    HalfedgeAttributes(OpenMesh::Attributes::PrevHalfedge);
+};
+
+typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
+/* -- OpenMesh -- */
+
 #include "drawableobject.h"
 
 class Field: public DrawableObject {

@@ -5,6 +5,8 @@
 #include "../include/meshviewerwidget.h"
 #include "../include/mainwindow.h"
 
+const size_t FIELD_SIZE = 256;
+
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QOpenGLWidget(parent)
 {
@@ -139,7 +141,7 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    field = new Field(15);
+    field = new Field(FIELD_SIZE);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -148,8 +150,8 @@ MeshViewerWidget::initializeGL()
     program->bind();
     {
         light = new Light();
-        light->set_position(0.0f, 100.0f, 200.0f, program->uniformLocation("light_position"))
-             ->set_color(0.6f, 0.6f, 0.6f, program->uniformLocation("light_color"))
+        light->set_position(0.0f, 50.0f, 10.0f, program->uniformLocation("light_position"))
+             ->set_color(0.7f, 0.7f, 0.7f, program->uniformLocation("light_color"))
              ->set_ambient(0.4f, program->uniformLocation("light_ambient"))
              ->enable(program->uniformLocation("light_on"));
 
@@ -157,6 +159,7 @@ MeshViewerWidget::initializeGL()
         axis->update_buffers(program);
 
         field->build(program);
+        field->use_unique_color(0.5f, 0.8f, 0.5f);
         field->update_buffers(program);
 
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
@@ -212,12 +215,12 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("view", view);
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
+        // display generated field
         field->show(program, GL_TRIANGLES);
 
-        // draw axis
-        light->off(program);
-        axis->show(program, GL_LINES);
-        light->on(program);
+        light->off(program);            // turn off the light
+        axis->show(program, GL_LINES);  // draw axis
+        light->on(program);             // turn on the light
     }
     program->release();
 }
@@ -294,7 +297,8 @@ void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
     float z = position.z();
-    float step = 0.1f;
+    float step = 0.001f * event->delta();
+    if( step < 0 ) step *= -1.0f;
 
     /* Wheel go down */
     if( event->delta() < 0 ){
@@ -351,10 +355,37 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         GLint mode;
         glGetIntegerv(GL_POLYGON_MODE, &mode);
 
-        if( mode == GL_FILL )
+        program->bind();
+
+        if( mode == GL_FILL ){
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        else
+            program->setUniformValue("wireframe_on", true);
+        }
+        else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            program->setUniformValue("wireframe_on", false);
+        }
+
+        program->release();
+
+        doneCurrent();
+        break;
+
+    // REBUILD FIELD MANUALLY
+    case Qt::Key_R :
+        makeCurrent();
+
+        if( field != nullptr ){
+            delete field;
+            field = nullptr;
+        }
+
+        program->bind();
+        field = new Field(FIELD_SIZE);
+        field->build(program);
+        field->use_unique_color(0.5f, 0.8f, 0.5f);
+        field->update_buffers(program);
+        program->release();
 
         doneCurrent();
         break;
