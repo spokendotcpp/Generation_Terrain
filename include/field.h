@@ -19,12 +19,14 @@ typedef OpenMesh::TriMesh_ArrayKernelT<MyTraits> MyMesh;
 class Field: public DrawableObject {
 // Attributes
 private:
-    size_t length;
-    int** map;
+    float width; // wanted width of your field (Ox)
+    float length; // wanted length of your field (Oz)
+    size_t size; // paving size of your field (number of segments)
+    float** map;
 
 // Public methods
 public:
-    Field(size_t length);
+    Field(float width, float height, size_t power);
     ~Field() override;
 
     void diamond_square();

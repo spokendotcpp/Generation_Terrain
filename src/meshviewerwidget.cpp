@@ -5,8 +5,6 @@
 #include "../include/meshviewerwidget.h"
 #include "../include/mainwindow.h"
 
-const size_t FIELD_SIZE = 256;
-
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QOpenGLWidget(parent)
 {
@@ -141,7 +139,7 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    field = new Field(FIELD_SIZE);
+    field = new Field(150, 150, 8);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -381,7 +379,7 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
         }
 
         program->bind();
-        field = new Field(FIELD_SIZE);
+        field = new Field(50, 50, 8);
         field->build(program);
         field->use_unique_color(0.5f, 0.8f, 0.5f);
         field->update_buffers(program);
