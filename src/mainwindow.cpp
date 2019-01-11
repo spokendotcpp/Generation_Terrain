@@ -61,4 +61,6 @@ MainWindow::connect_signals_and_slots()
     connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
     connect(ui->action_flat, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(false); });
     connect(ui->action_smooth, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(true); });
+    connect(ui->spinBox_size, SIGNAL(valueChanged(int)), ui->viewer, SLOT(change_size_map(int)));
+    connect(ui->regen_button, SIGNAL(clicked()), ui->viewer, SLOT(regenerateField()));
 }

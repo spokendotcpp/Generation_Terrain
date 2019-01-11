@@ -2,6 +2,7 @@
 #define MESHVIEWERWIDGET_H
 
 #include <chrono>
+#include <cmath>
 
 #include <QApplication>
 #include <QScreen>
@@ -67,6 +68,8 @@ private:
     ArcBall* arcball;
     Axis* axis;
     Field* field;
+    // Size of field
+    size_t FIELD_SIZE = 256;
 
     // DISPLAY METHODS
     bool wireframe_on;
@@ -130,6 +133,10 @@ public:
     /* Difference between two high resolution clock time point as microseconds */
     static
     long microseconds_diff(Clock::time_point t1, Clock::time_point t2);
+
+public slots:
+    void change_size_map(int s);
+    void regenerateField();
 
 /* Private methods */
 private:

@@ -5,7 +5,7 @@
 #include "../include/meshviewerwidget.h"
 #include "../include/mainwindow.h"
 
-const size_t FIELD_SIZE = 256;
+//const size_t FIELD_SIZE = 256;
 
 MeshViewerWidget::MeshViewerWidget(QWidget* parent)
     :QOpenGLWidget(parent)
@@ -159,7 +159,7 @@ MeshViewerWidget::initializeGL()
         axis->update_buffers(program);
 
         field->build(program);
-        field->use_unique_color(0.5f, 0.8f, 0.5f);
+        //field->use_unique_color(0.5f, 0.8f, 0.5f);
         field->update_buffers(program);
 
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
@@ -373,21 +373,7 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
 
     // REBUILD FIELD MANUALLY
     case Qt::Key_R :
-        makeCurrent();
-
-        if( field != nullptr ){
-            delete field;
-            field = nullptr;
-        }
-
-        program->bind();
-        field = new Field(FIELD_SIZE);
-        field->build(program);
-        field->use_unique_color(0.5f, 0.8f, 0.5f);
-        field->update_buffers(program);
-        program->release();
-
-        doneCurrent();
+        regenerateField();
         break;
     }
 
@@ -455,4 +441,31 @@ MeshViewerWidget::reset_view()
     default_view();
     update_view();
     update();
+}
+
+void
+MeshViewerWidget::change_size_map(int s)
+{
+    FIELD_SIZE = (size_t)pow(2,s)+1;
+    std::cout << "Size changed to : " << s << ", aka " << FIELD_SIZE << std::endl;
+}
+
+void
+MeshViewerWidget::regenerateField()
+{
+    makeCurrent();
+
+    if( field != nullptr ){
+        delete field;
+        field = nullptr;
+    }
+
+    program->bind();
+    field = new Field(FIELD_SIZE);
+    field->build(program);
+    //field->use_unique_color(0.5f, 0.8f, 0.5f);
+    field->update_buffers(program);
+    program->release();
+
+    doneCurrent();
 }

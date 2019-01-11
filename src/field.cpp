@@ -125,7 +125,7 @@ Field::build(QOpenGLShaderProgram* program)
 
     size_t nb_vertices = length * length;
     GLfloat* positions = new GLfloat[nb_vertices*3];
-
+    GLfloat* colors = new GLfloat[nb_vertices*3];
     // Square mesh = (n-1)² squares
     // Triangle mesh = (n-1)² * 2
     // One triangle has 3 indices
@@ -138,7 +138,7 @@ Field::build(QOpenGLShaderProgram* program)
     // let user choose size of field
     // nb of segments (current length)
     // ...
-    float x = -(length*0.1f);
+    float x = -(length*0.1);
     float z = x;
 
     for(size_t j=0; j < length; ++j){
@@ -166,7 +166,7 @@ Field::build(QOpenGLShaderProgram* program)
                 indices[it++] = GLuint(idx+1);
             }
         }
-        z += 0.2f;
+        z += 0.2;
         x = -(length*0.1f);
     }
 
@@ -191,11 +191,37 @@ Field::build(QOpenGLShaderProgram* program)
         }
     }
 
+    for(size_t j=0; j < length; ++j)
+    {
+        for(size_t i=0; i < length; ++i)
+        {
+            size_t idx = (j*length + i);
+            if(map[j][i] < -128)
+            {
+                colors[(idx*3)+0] = 0.0f;
+                colors[(idx*3)+1] = 0.0f;
+                colors[(idx*3)+2] = 0.0f;
+            }
+            else if(map[j][i] > 127)
+            {
+                colors[(idx*3)+0] = 1.0f;
+                colors[(idx*3)+1] = 1.0f;
+                colors[(idx*3)+2] = 1.0f;
+            }
+            else
+            {
+                colors[(idx*3)+0] = ((GLfloat)map[j][i]+128.0f)/255.0f;
+                colors[(idx*3)+1] = ((GLfloat)map[j][i]+128.0f)/255.0f;
+                colors[(idx*3)+2] = ((GLfloat)map[j][i]+128.0f)/255.0f;
+            }
+        }
+    }
+
     mesh.release_vertex_normals();
     mesh.release_face_normals();
 
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
-    set_vertices_colors(program->attributeLocation("color"), new GLfloat[nb_vertices*3]);
+    set_vertices_colors(program->attributeLocation("color"), colors);//new GLfloat[nb_vertices*3]);
     set_vertices_normals(program->attributeLocation("normal"), normals);
 
     return initialize(nb_vertices, nb_indices, 3);

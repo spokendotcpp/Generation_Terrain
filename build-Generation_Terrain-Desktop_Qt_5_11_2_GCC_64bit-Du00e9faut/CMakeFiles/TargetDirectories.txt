@@ -1,0 +1,4 @@
+/home/stardust-sonic/Generation_Terrain/build-Generation_Terrain-Desktop_Qt_5_11_2_GCC_64bit-Du00e9faut/CMakeFiles/rebuild_cache.dir
+/home/stardust-sonic/Generation_Terrain/build-Generation_Terrain-Desktop_Qt_5_11_2_GCC_64bit-Du00e9faut/CMakeFiles/fields.dir
+/home/stardust-sonic/Generation_Terrain/build-Generation_Terrain-Desktop_Qt_5_11_2_GCC_64bit-Du00e9faut/CMakeFiles/edit_cache.dir
+/home/stardust-sonic/Generation_Terrain/build-Generation_Terrain-Desktop_Qt_5_11_2_GCC_64bit-Du00e9faut/CMakeFiles/fields_autogen.dir
