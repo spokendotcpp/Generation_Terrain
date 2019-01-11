@@ -1,8 +1,8 @@
 #include "../include/field.h"
 #include <iostream>
 
-Field::Field(float _width, float _length, size_t power)
-    :width(_width), length(_length), size(0), map(nullptr)
+Field::Field(float _width, float _height, float _length, size_t power)
+    :width(_width), height(_height), length(_length), size(0), map(nullptr)
 {
     if( power >= 16 )
         power = 8;  // default
@@ -30,8 +30,8 @@ Field::~Field()
     }
 }
 
-//template<typename T>
-void median_filter(float** data, int width, int height, int window_width)
+template<typename T>
+void median_filter(T** data, int width, int height, int window_width)
 {
     if( window_width % 2 == 0 )
         window_width = 3;
@@ -40,13 +40,11 @@ void median_filter(float** data, int width, int height, int window_width)
     int window_size = window_width*window_width;
     int offset = window_width/2;
 
-    std::cerr << offset << std::endl;
+    T* window = new T[window_size];
 
-    float* window = new float[window_size];
-
-    float** map = new float*[height];
+    T** map = new T*[height];
     for(int i=0; i < height; ++i)
-        map[i] = new float[width];
+        map[i] = new T[width];
 
     for(int j=0; j < height; ++j){
         for(int i=0; i < width; ++i){
@@ -71,7 +69,7 @@ void median_filter(float** data, int width, int height, int window_width)
             for(int m=0; m < window_size; ++m){
                 for(int n=m+1; n < window_size; ++n){
                     if( window[m] > window[n] ){
-                        float tmp = window[m];
+                        T tmp = window[m];
                         window[m] = window[n];
                         window[n] = tmp;
                     }
@@ -103,8 +101,8 @@ Field::diamond_square()
     if( map == nullptr )
         return;
 
-    float yMax = 20.0f;
-    float yMin = -20.0f;
+    float yMin = -(height/2.0f);
+    float yMax = (height/2.0f);
 
     std::random_device random_device;
     std::mt19937 engine { random_device() };
@@ -190,6 +188,7 @@ Field::diamond_square()
         step = half;
     }
 
+    // 5x5 median filter | filter bigest noise
     median_filter(map, int(size), int(size), 5);
 }
 
@@ -202,14 +201,16 @@ Field::build(QOpenGLShaderProgram* program)
     mesh.request_face_normals();
     mesh.request_vertex_normals();
 
-    size_t nb_vertices = size * size;
-    GLfloat* positions = new GLfloat[nb_vertices*3];
+    _vertices = size * size;
+    _faces = ((size-1)*(size-1))*2;
+
+    GLfloat* positions = new GLfloat[_vertices*3];
 
     // Square mesh = (n-1)² squares
     // Triangle mesh = (n-1)² * 2
     // One triangle has 3 indices
     // R = (n-1)² * 2 * 3
-    size_t nb_indices = (((size-1) * (size-1)) * 2) * 3;
+    size_t nb_indices = _faces * 3;
     size_t it = 0;
     GLuint* indices = new GLuint[nb_indices];
 
@@ -265,7 +266,7 @@ Field::build(QOpenGLShaderProgram* program)
     mesh.update_face_normals();
     mesh.update_vertex_normals();
 
-    GLfloat* normals = new GLfloat[nb_vertices*3];
+    GLfloat* normals = new GLfloat[_vertices*3];
     size_t i = 0;
     for(const auto& v: mesh.vertices()){
         MyMesh::Normal n = mesh.normal(v);
@@ -278,9 +279,54 @@ Field::build(QOpenGLShaderProgram* program)
     mesh.release_vertex_normals();
     mesh.release_face_normals();
 
+    // COLORS
+    GLfloat* colors = new GLfloat[_vertices*3];
+    float top = height/2.0f;
+
+    for(size_t j=0; j < size; ++j){
+        for(size_t i=0; i < size; ++i){
+
+            size_t idx = (j*size)+i;
+            float r, g, b;
+            float pos = positions[(idx*3)+1];
+
+            if( pos > (top * 0.80f) ){
+                float coeff = pos/top;
+                r = 1.0f * coeff;
+                g = 1.0f * coeff;
+                b = 1.0f * coeff;
+            }
+            else
+            if( pos > (top * 0.20f) ){
+                float coeff = 1.0f - (pos/top);
+                r = 0.4f * (1.0f - coeff);
+                g = 1.0f * coeff;
+                b = 0.4f * coeff;
+            }
+            else
+            if( pos > 0.0f ){
+                float coeff = 1.0f - (pos/top);
+                r = 1.0f * coeff;
+                g = 1.0f * coeff;
+                b = 0.5f * coeff;
+            }
+            else
+            {
+                float coeff = (pos + top)/top;
+                r = 0.1f * coeff;
+                g = 0.4f * coeff;
+                b = 1.0f * coeff;
+            }
+
+            colors[(idx*3)+0] = r;
+            colors[(idx*3)+1] = g;
+            colors[(idx*3)+2] = b;
+        }
+    }
+
     set_vertices_geometry(program->attributeLocation("position"), positions, indices);
-    set_vertices_colors(program->attributeLocation("color"), new GLfloat[nb_vertices*3]);
+    set_vertices_colors(program->attributeLocation("color"), colors);
     set_vertices_normals(program->attributeLocation("normal"), normals);
 
-    return initialize(nb_vertices, nb_indices, 3);
+    return initialize(_vertices, nb_indices, 3);
 }

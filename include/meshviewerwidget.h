@@ -36,7 +36,6 @@ class MeshViewerWidget: public QOpenGLWidget
     Q_OBJECT
 /* Private members */
 private:
-    //ShaderProgram* program; // Shader program
     QOpenGLShaderProgram* program;
 
     /* Matrix which compose our Model View Projection Matrix -- uniform values */
@@ -130,6 +129,11 @@ public:
     /* Difference between two high resolution clock time point as microseconds */
     static
     long microseconds_diff(Clock::time_point t1, Clock::time_point t2);
+
+    /* build a new field */
+    void generate_new_field(float width, float height, float length, size_t power);
+
+    inline const Field* get_field(){ return field; }
 
 /* Private methods */
 private:

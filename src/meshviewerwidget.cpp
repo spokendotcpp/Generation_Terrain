@@ -97,7 +97,7 @@ MeshViewerWidget::default_view()
     rotation = QMatrix4x4();
     rotation.rotate(0.0f, 1.0f, 1.0f, 1.0f);
 
-    position = QVector3D(0.0f, 0.0f, -2.0f);
+    position = QVector3D(0.0f, 0.0f, -100.0f);
     update_view();
 }
 
@@ -139,7 +139,6 @@ MeshViewerWidget::initializeGL()
 
     // Create Object(s) :
     axis = new Axis();
-    field = new Field(150, 150, 8);
 
     program = new QOpenGLShaderProgram();
     program->addShaderFromSourceFile(QOpenGLShader::Vertex, "../shaders/simple.vert.glsl");
@@ -148,7 +147,7 @@ MeshViewerWidget::initializeGL()
     program->bind();
     {
         light = new Light();
-        light->set_position(0.0f, 50.0f, 10.0f, program->uniformLocation("light_position"))
+        light->set_position(0.0f, 200.0f, 100.0f, program->uniformLocation("light_position"))
              ->set_color(0.7f, 0.7f, 0.7f, program->uniformLocation("light_color"))
              ->set_ambient(0.4f, program->uniformLocation("light_ambient"))
              ->enable(program->uniformLocation("light_on"));
@@ -156,15 +155,11 @@ MeshViewerWidget::initializeGL()
         axis->build(program);
         axis->update_buffers(program);
 
-        field->build(program);
-        field->use_unique_color(0.5f, 0.8f, 0.5f);
-        field->update_buffers(program);
-
         program->setUniformValue("wireframe_color", QVector3D(1.0f, 0.0f, 0.0f));
     }
     program->release();
 
-    glClearColor(1.0f, 191.0f/255.0f, 179.0f/255.0f, 1.0f);
+    glClearColor(1.0f, 200.0f/255.0f, 200.0f/255.0f, 1.0f);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDepthFunc(GL_LESS);
@@ -214,7 +209,8 @@ MeshViewerWidget::paintGL()
         program->setUniformValue("view_inverse", view.transposed().inverted());
 
         // display generated field
-        field->show(program, GL_TRIANGLES);
+        if( field != nullptr )
+            field->show(program, GL_TRIANGLES);
 
         light->off(program);            // turn off the light
         axis->show(program, GL_LINES);  // draw axis
@@ -319,7 +315,7 @@ MeshViewerWidget::wheelEvent(QWheelEvent* event)
 void
 MeshViewerWidget::handle_key_events(QKeyEvent* event)
 {
-    float step = 0.1f;
+    float step = 0.5f;
 
     switch( event->key() ){
     case Qt::Key_Up :
@@ -364,25 +360,6 @@ MeshViewerWidget::handle_key_events(QKeyEvent* event)
             program->setUniformValue("wireframe_on", false);
         }
 
-        program->release();
-
-        doneCurrent();
-        break;
-
-    // REBUILD FIELD MANUALLY
-    case Qt::Key_R :
-        makeCurrent();
-
-        if( field != nullptr ){
-            delete field;
-            field = nullptr;
-        }
-
-        program->bind();
-        field = new Field(50, 50, 8);
-        field->build(program);
-        field->use_unique_color(0.5f, 0.8f, 0.5f);
-        field->update_buffers(program);
         program->release();
 
         doneCurrent();
@@ -452,5 +429,26 @@ MeshViewerWidget::reset_view()
 {
     default_view();
     update_view();
+    update();
+}
+
+void
+MeshViewerWidget::generate_new_field(float w, float h, float l, size_t p)
+{
+    makeCurrent();
+
+    if( field != nullptr ){
+        delete field;
+        field = nullptr;
+    }
+
+    program->bind();
+    field = new Field(w, h, l, p);
+    field->build(program);
+    //field->use_unique_color(0.5f, 0.8f, 0.5f);
+    field->update_buffers(program);
+    program->release();
+
+    doneCurrent();
     update();
 }

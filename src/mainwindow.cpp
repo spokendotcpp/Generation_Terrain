@@ -50,15 +50,40 @@ MainWindow::keyPressEvent(QKeyEvent* event)
 void
 MainWindow::timerEvent(QTimerEvent*)
 {
-    std::cerr << ui->viewer->get_computed_frames() << std::endl;
+    ui->fps->display(int(ui->viewer->get_computed_frames()));
     ui->viewer->reset_computed_frames();
 }
 
 void
 MainWindow::connect_signals_and_slots()
 {
-    // QUIT APP
-    connect(ui->actionExit, &QAction::triggered, this, &QMainWindow::close);
+    connect(ui->action_quit, &QAction::triggered, this, &QMainWindow::close);  // QUIT APP
+
+    // Render Flat or Smooth
     connect(ui->action_flat, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(false); });
     connect(ui->action_smooth, &QAction::triggered, ui->viewer, [this]{ ui->viewer->smooth_render(true); });
+
+    // Generate Push Button
+    connect(ui->button_generate, &QPushButton::released, ui->viewer, [this]{
+        ui->viewer->generate_new_field(
+            float(ui->spinbox_width->value()),
+            float(ui->spinbox_height->value()),
+            float(ui->spinbox_length->value()),
+            size_t(ui->spinbox_size->value())
+        );
+
+        const Field* field = ui->viewer->get_field();
+        if( field != nullptr ){
+
+            size_t size = (1 << ui->spinbox_size->value())+1;
+
+            ui->statusBar->showMessage(QString(
+                "Number of faces: "
+                + QString::number(field->nb_faces())
+                + " | Number of vertices: "
+                + QString::number(field->nb_vertices())
+                + " (" + QString::number(size) + "x" + QString::number(size) + ")"
+            ));
+        }
+    });
 }
