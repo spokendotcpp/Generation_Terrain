@@ -291,7 +291,7 @@ void
 MeshViewerWidget::wheelEvent(QWheelEvent* event)
 {
     float z = position.z();
-    float step = 0.001f * event->delta();
+    float step = 0.1f * event->delta();
     if( step < 0 ) step *= -1.0f;
 
     /* Wheel go down */
@@ -445,7 +445,6 @@ MeshViewerWidget::generate_new_field(float w, float h, float l, size_t p)
     program->bind();
     field = new Field(w, h, l, p);
     field->build(program);
-    //field->use_unique_color(0.5f, 0.8f, 0.5f);
     field->update_buffers(program);
     program->release();
 
